@@ -354,7 +354,7 @@ void potential::plot2D(const device_params & p, const voltage<3> & V, const char
     gp << "set zlabel \"Phi / V\"\n";
     gp << "unset key\n";
 
-    gp << "set terminal pdf size 5,3\nset output 'pot.pdf'\n";
+//    gp << "set terminal pdf size 5,3\nset output 'pot.pdf'\n";
 
     // indicate cnt area
     gp << "set obj rect from " << 0 << "," << p.r_cnt << " to " << p.l << "," << -p.r_cnt << "front fillstyle empty\n";
