@@ -151,8 +151,8 @@ void scaling(double lg) {
     device d("ntfet", ntfet);
     d.p.l_g = lg;
     d.p.update("updated");
-    transfer<true>(d.p, { { 0, .2, -.3 } }, .5, 800);
-    output<true>(d.p,   { { 0, -.2, .2 } }, .5, 800);
+//    transfer<true>(d.p, { { 0, .2, -.3 } }, .5, 800);
+    output<true>(d.p,   { { 0, -.2, .4 } }, .5, 800);
 }
 
 void overlap(double gap) {
@@ -164,8 +164,8 @@ void overlap(double gap) {
     d.p.l_sox = l_total - gap;
     d.p.l_sg = gap;
     d.p.update("updated");
-    transfer<true>(d.p, { { 0, .2, -.3 } }, .5, 800);
-    output<true>(d.p,   { { 0, -.2, .2 } }, .5, 800);
+//    transfer<true>(d.p, { { 0, .2, -.3 } }, .5, 800);
+    output<true>(d.p,   { { 0, -.2, .4 } }, .5, 800);
 }
 
 void separation(double ldg) {
@@ -175,8 +175,8 @@ void separation(double ldg) {
     device d("ntfet", ntfet);
     d.p.l_dg = ldg;
     d.p.update("updated");
-    transfer<true>(d.p, { { 0, .2, -.3 } }, .5, 800);
-    output<true>(d.p,   { { 0, -.2, .2 } }, .5, 800);
+//    transfer<true>(d.p, { { 0, .2, -.3 } }, .5, 800);
+    output<true>(d.p,   { { 0, -.2, .4 } }, .5, 800);
 }
 
 int main(int argc, char ** argv) {
