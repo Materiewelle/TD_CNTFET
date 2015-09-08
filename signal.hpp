@@ -111,5 +111,19 @@ signal<N> square_signal(double T, const voltage<N> & V0, const voltage<N> & V1, 
 
     return s;
 }
+
+static void sigplot(signal<3> sig) {
+    using namespace arma;
+    vec vs(sig.N_t);
+    vec vd(sig.N_t);
+    vec vg(sig.N_t);
+    for (int i = 0; i < sig.N_t; ++i) {
+        vs(i) = sig.V[i][S];
+        vd(i) = sig.V[i][D];
+        vg(i) = sig.V[i][G];
+    }
+    plot(vs, vd, vg);
+}
+
 #endif
 

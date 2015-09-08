@@ -36,8 +36,8 @@ static const geometry tfet_geometry {
      7.0, // l_sc
     15.0, // l_sox
      5.0, // l_sg
-    20.0, // l_g
-      20, // l_dg
+    30.0, // l_g
+    30.0, // l_dg
        0, // l_dox
      7.0, // l_dc
      1.0, // r_cnt
@@ -122,6 +122,15 @@ static const device_params ptfet("ptfet", tfet_geometry, ptfet_model);
 using namespace arma;
 using namespace std;
 
+// global steady-state curve parameters:
+static const double gvg0 = -.3;
+static const double gvg1 = .5;
+static const double gvgop = .4;
+static const double gvd0 = 0.;
+static const double gvd1 = .5;
+static const double gvdop = .2;
+static const int gN = 960;
+
 void voltage_point(double vs, double vd, double vg) {
     device d("ntfet", ntfet, {vs, vd, vg});
     d.steady_state();
@@ -144,6 +153,34 @@ void output_test(double vd0, double vd1, double vg, int N) {
     output<true>(d.p, { { 0, vd0, vg } }, vd1, N);
 }
 
+void naive_transfer(double vd) {
+    stringstream ss;
+    ss << "naive/trans_vs=" << vd;
+    save_folder(ss.str());
+    device d("ntfet", ntfet);
+    d.p.l_sox = 5;
+    d.p.l_sg = 15;
+    d.p.l_g = 20;
+    d.p.l_dg = 10;
+    d.p.l_dox = 0;
+    d.p.update("updated");
+    transfer<true>(d.p, { { 0, vd, gvg0 } }, gvg1, gN);
+}
+
+void naive_output(double vg) {
+    stringstream ss;
+    ss << "naive/outp_vg=" << vg;
+    save_folder(ss.str());
+    device d("ntfet", ntfet);
+    d.p.l_sox = 5;
+    d.p.l_sg = 15;
+    d.p.l_g = 20;
+    d.p.l_dg = 10;
+    d.p.l_dox = 0;
+    d.p.update("updated");
+    output<true>(d.p, { { 0, gvd0, vg } }, gvd1, gN);
+}
+
 void scaling(double lg) {
     stringstream ss;
     ss << "scaling/lg=" << lg;
@@ -151,7 +188,7 @@ void scaling(double lg) {
     device d("ntfet", ntfet);
     d.p.l_g = lg;
     d.p.update("updated");
-    transfer<true>(d.p, { { 0, .2, -.3 } }, .5, 960);
+    transfer<true>(d.p, { { 0, gvdop, gvg0 } }, gvg1, gN);
 }
 
 void overlap(double gap) {
@@ -163,8 +200,8 @@ void overlap(double gap) {
     d.p.l_sox = l_total - gap;
     d.p.l_sg = gap;
     d.p.update("updated");
-    transfer<true>(d.p, { { 0, .2, -.3 } }, .5, 960);
-    output<true>(d.p,   { { 0, -.2, .4 } }, .5, 960);
+    transfer<true>(d.p, { { 0, gvdop, gvg0 } }, gvg1, gN);
+//    output<true>(d.p, { { 0, gvd0, gvgop } }, gvd1, gN);
 }
 
 void separation(double ldg) {
@@ -174,7 +211,137 @@ void separation(double ldg) {
     device d("ntfet", ntfet);
     d.p.l_dg = ldg;
     d.p.update("updated");
-    transfer<true>(d.p, { { 0, .2, -.3 } }, .5, 960);
+    transfer<true>(d.p, { { 0, gvdop, gvg0 } }, gvg1, gN);
+}
+
+void final_transfer(double vd) {
+    stringstream ss;
+    ss << "naive/trans_vs=" << vd;
+    save_folder(ss.str());
+    device d("ntfet", ntfet);
+    transfer<true>(d.p, { { 0, vd, gvg0 } }, gvg1, gN);
+}
+
+void final_output(double vg) {
+    stringstream ss;
+    ss << "naive/outp_vg=" << vg;
+    save_folder(ss.str());
+    device d("ntfet", ntfet);
+    output<true>(d.p, { { 0, gvd0, vg } }, gvd1, gN);
+}
+
+void contacts() {
+    stringstream ss;
+    ss << "contacts";
+    save_folder(ss.str());
+    device d("ntfet", ntfetc);
+    d.p.dx = .1; // we need broader bands in the contacts
+    d.p.update("contacts");
+    transfer<true>(d.p, { { 0, gvdop, gvg0 } }, gvg1, gN);
+    output<true>(d.p, { { 0, gvd0, gvgop } }, gvd1, gN);
+}
+
+void gstep() {
+    double beg = 1e-12;
+    double len = 50e-15;
+    double cool = 3e-12;
+
+    signal<3> pre   = linear_signal<3>(beg,  { 0, .2, 0. }, { 0, .2, 0. }); // before
+    signal<3> slope = linear_signal<3>(len,  { 0, .2, 0. }, { 0, .2, .2 }); // while
+    signal<3> after = linear_signal<3>(cool, { 0, .2, .2 }, { 0, .2, .2 }); // after
+
+    signal<3> sig = pre + slope + after; // complete signal
+
+//    sigplot(sig); return;
+
+    stringstream ss;
+    ss << "gstep/";
+    save_folder(ss.str());
+
+    device d("ntfet", ntfet, sig.V[0]);
+    d.steady_state();
+    d.init_time_evolution(sig.N_t);
+
+    // get energy indices around fermi energy and init movie
+    std::vector<std::pair<int, int>> E_ind1 = movie::around_Ef(d, +0.1);
+    std::vector<std::pair<int, int>> E_ind2 = movie::around_Ef(d, +0.4);
+    std::vector<std::pair<int, int>> E_ind;
+    E_ind.reserve(E_ind1.size() + E_ind2.size());
+    E_ind.insert(E_ind.end(), E_ind1.begin(), E_ind1.end());
+    E_ind.insert(E_ind.end(), E_ind2.begin(), E_ind2.end());
+    movie argo(d, E_ind);
+
+    // perform time-evolution
+    for (int i = 1; i < sig.N_t; ++i) {
+        for (int term : {S, D, G}) {
+            d.contacts[G]->V = sig.V[i][term];
+        }
+        d.time_step();
+    }
+    d.save();
+}
+
+inline void gsquare(double f) {
+    double rise = 50e-15;
+    double fall = rise;
+    double len = 3.2 / f; // we want 3 periods
+
+    signal<3> sig = square_signal<3>(len, { 0, .2, .0 }, { 0, .2, .2}, f, rise, fall);
+
+//    sigplot(sig); return;
+
+    stringstream ss;
+    ss << "gate_square_signal/" << "f=" << f;
+    save_folder(ss.str());
+
+    device d("ntfet", ntfet, sig.V[0]);
+    d.steady_state();
+    d.init_time_evolution(sig.N_t);
+
+    // time-evolution:
+    for (int i = 1; i < sig.N_t; ++i) {
+        for (int term : {S, D, G}) {
+            d.contacts[G]->V = sig.V[i][term];
+        }
+        d.time_step();
+    }
+    d.save();
+}
+
+void gsine(double f) {
+    double len = 3 / f;
+
+    // swing around 0.1V with amplitude 0.1V -> vg between 0 and 0.2
+    double phase = 1.5 * M_PI; // start from minimum
+    signal<3> sig = sine_signal<3>(len,  { 0, .2, .1 }, { 0,  0, .1 }, f, phase);
+
+//    sigplot(sig); return;
+
+    stringstream ss;
+    ss << "gsine/" << "f=" << f;
+    save_folder(ss.str());
+
+    device d("ntfet", ntfet, sig.V[0]);
+    d.steady_state();
+    d.init_time_evolution(sig.N_t);
+
+    // get energy indices around fermi energy and init movie
+    std::vector<std::pair<int, int>> E_ind1 = movie::around_Ef(d, -0.05);
+    std::vector<std::pair<int, int>> E_ind2 = movie::around_Ef(d, -0.1);
+    std::vector<std::pair<int, int>> E_ind;
+    E_ind.reserve(E_ind1.size() + E_ind2.size());
+    E_ind.insert(E_ind.end(), E_ind1.begin(), E_ind1.end());
+    E_ind.insert(E_ind.end(), E_ind2.begin(), E_ind2.end());
+    movie argo(d, E_ind);
+
+    // time-evolution
+    for (int i = 1; i < sig.N_t; ++i) {
+        for (int term : {S, D, G}) {
+            d.contacts[G]->V = sig.V[i][term];
+        }
+        d.time_step();
+    }
+    d.save();
 }
 
 int main(int argc, char ** argv) {
@@ -194,18 +361,24 @@ int main(int argc, char ** argv) {
     // second argument chooses the type of simulation
     string stype(argv[2]);
 
-    // ------------- test function calls --------------------------------
+    // ------------- test functions -------------------------------------
     if (stype == "point" && argc == 6) {
         // Vs, Vd, Vg
         voltage_point(stod(argv[3]), stod(argv[4]), stod(argv[5]));
-    } else if (stype == "transfer" && argc == 7) {
+    } else if (stype == "transtest" && argc == 7) {
         // Vg0, Vg1, Vd, N
         transfer_test(stod(argv[3]), stod(argv[4]), stod(argv[5]), stoi(argv[6]));
-    } else if (stype == "output" && argc == 7) {
+    } else if (stype == "outptest" && argc == 7) {
         // Vd1, Vd2, Vg, N
         output_test(stod(argv[3]), stod(argv[4]), stod(argv[5]), stoi(argv[6]));
 
-    // ------------- thesis simulation types ------------------------------
+    // ------------- thesis steady-state simulations --------------------
+    } else if (stype == "ntransfer" && argc == 4) {
+        // vs for parallelization
+        naive_transfer(stod(argv[3]));
+    } else if (stype == "noutput" && argc == 4) {
+        // vg for parallelization
+        naive_output(stod(argv[3]));
     } else if (stype == "scaling" && argc == 4) {
         // lg for parallelization
         scaling(stod(argv[3]));
@@ -215,6 +388,28 @@ int main(int argc, char ** argv) {
     } else if (stype == "separation" && argc == 4) {
         // l_dg for parallelization
         separation(stod(argv[3]));
+    } else if (stype == "ftransfer" && argc == 4) {
+        // vs for parallelization
+        final_transfer(stod(argv[3]));
+    } else if (stype == "foutput" && argc == 4) {
+        // vg for parallelization
+        final_output(stod(argv[3]));
+    } else if (stype == "contacts" && argc == 3) {
+        contacts();
+
+    // ------------- thesis time-dependent simulations ------------------
+    } else if (stype == "gstep" && argc == 3) {
+        // vs for parallelization
+        gstep();
+    } else if (stype == "gsquare" && argc == 4) {
+        // square wave of certain frequency on gate
+        gsquare(stod(argv[3]));
+    } else if (stype == "gsine" && argc == 4) {
+        // sine wave of certain frequency on gate
+        gsine(stod(argv[3]));
+
+
+
     } else {
         cout << "wrong number of arguments or unknown simulation type" << endl;
     }
