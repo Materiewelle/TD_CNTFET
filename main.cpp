@@ -258,18 +258,20 @@ void gstep() {
     ss << "gstep";
     save_folder(ss.str());
 
-    device d("ntfet", ntfet, sig.V[0]);
+    device d("unmatched", ntfet, sig.V[0]);
+    d.p.F[G] = .2; //match
+    d.p.update("matched");
     d.steady_state();
     d.init_time_evolution(sig.N_t);
 
-    // get energy indices around fermi energy and init movie
-    std::vector<std::pair<int, int>> E_ind1 = movie::around_Ef(d, +0.1);
-    std::vector<std::pair<int, int>> E_ind2 = movie::around_Ef(d, +0.4);
-    std::vector<std::pair<int, int>> E_ind;
-    E_ind.reserve(E_ind1.size() + E_ind2.size());
-    E_ind.insert(E_ind.end(), E_ind1.begin(), E_ind1.end());
-    E_ind.insert(E_ind.end(), E_ind2.begin(), E_ind2.end());
-    movie argo(d, E_ind);
+//    // get energy indices around fermi energy and init movie
+//    std::vector<std::pair<int, int>> E_ind1 = movie::around_Ef(d, -0.05);
+//    std::vector<std::pair<int, int>> E_ind2 = movie::around_Ef(d, -0.1);
+//    std::vector<std::pair<int, int>> E_ind;
+//    E_ind.reserve(E_ind1.size() + E_ind2.size());
+//    E_ind.insert(E_ind.end(), E_ind1.begin(), E_ind1.end());
+//    E_ind.insert(E_ind.end(), E_ind2.begin(), E_ind2.end());
+//    movie argo(d, E_ind);
 
     // perform time-evolution
     for (int i = 1; i < sig.N_t; ++i) {
@@ -294,7 +296,9 @@ inline void gsquare(double f) {
     ss << "gate_square_signal/" << "f=" << f;
     save_folder(ss.str());
 
-    device d("ntfet", ntfet, sig.V[0]);
+    device d("unmatched", ntfet, sig.V[0]);
+    d.p.F[G] = .2; //match
+    d.p.update("matched");
     d.steady_state();
     d.init_time_evolution(sig.N_t);
 
@@ -321,18 +325,20 @@ void gsine(double f) {
     ss << "gsine/" << "f=" << f;
     save_folder(ss.str());
 
-    device d("ntfet", ntfet, sig.V[0]);
+    device d("unmatched", ntfet, sig.V[0]);
+    d.p.F[G] = .2; //match
+    d.p.update("matched");
     d.steady_state();
     d.init_time_evolution(sig.N_t);
 
-    // get energy indices around fermi energy and init movie
-    std::vector<std::pair<int, int>> E_ind1 = movie::around_Ef(d, -0.05);
-    std::vector<std::pair<int, int>> E_ind2 = movie::around_Ef(d, -0.1);
-    std::vector<std::pair<int, int>> E_ind;
-    E_ind.reserve(E_ind1.size() + E_ind2.size());
-    E_ind.insert(E_ind.end(), E_ind1.begin(), E_ind1.end());
-    E_ind.insert(E_ind.end(), E_ind2.begin(), E_ind2.end());
-    movie argo(d, E_ind);
+//    // get energy indices around fermi energy and init movie
+//    std::vector<std::pair<int, int>> E_ind1 = movie::around_Ef(d, -0.05);
+//    std::vector<std::pair<int, int>> E_ind2 = movie::around_Ef(d, -0.1);
+//    std::vector<std::pair<int, int>> E_ind;
+//    E_ind.reserve(E_ind1.size() + E_ind2.size());
+//    E_ind.insert(E_ind.end(), E_ind1.begin(), E_ind1.end());
+//    E_ind.insert(E_ind.end(), E_ind2.begin(), E_ind2.end());
+//    movie argo(d, E_ind);
 
     // time-evolution
     for (int i = 1; i < sig.N_t; ++i) {
