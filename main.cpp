@@ -264,15 +264,6 @@ void gstep() {
     d.steady_state();
     d.init_time_evolution(sig.N_t);
 
-//    // get energy indices around fermi energy and init movie
-//    std::vector<std::pair<int, int>> E_ind1 = movie::around_Ef(d, -0.05);
-//    std::vector<std::pair<int, int>> E_ind2 = movie::around_Ef(d, -0.1);
-//    std::vector<std::pair<int, int>> E_ind;
-//    E_ind.reserve(E_ind1.size() + E_ind2.size());
-//    E_ind.insert(E_ind.end(), E_ind1.begin(), E_ind1.end());
-//    E_ind.insert(E_ind.end(), E_ind2.begin(), E_ind2.end());
-//    movie argo(d, E_ind);
-
     // perform time-evolution
     for (int i = 1; i < sig.N_t; ++i) {
         for (int term : {S, D, G}) {
@@ -312,7 +303,7 @@ inline void gsquare(double f) {
     d.save();
 }
 
-void gsine(double f) {
+void gsine(double f) { // compile with smaller dt!!!
     double len = 3 / f;
 
     // swing around 0.1V with amplitude 0.1V -> vg between 0 and 0.2
@@ -331,14 +322,9 @@ void gsine(double f) {
     d.steady_state();
     d.init_time_evolution(sig.N_t);
 
-//    // get energy indices around fermi energy and init movie
-//    std::vector<std::pair<int, int>> E_ind1 = movie::around_Ef(d, -0.05);
-//    std::vector<std::pair<int, int>> E_ind2 = movie::around_Ef(d, -0.1);
-//    std::vector<std::pair<int, int>> E_ind;
-//    E_ind.reserve(E_ind1.size() + E_ind2.size());
-//    E_ind.insert(E_ind.end(), E_ind1.begin(), E_ind1.end());
-//    E_ind.insert(E_ind.end(), E_ind2.begin(), E_ind2.end());
-//    movie argo(d, E_ind);
+    // get energy indices around fermi energy and init movie
+    std::vector<std::pair<int, int>> E_ind = movie::around_Ef(d, -0.05);
+    movie argo(d, E_ind);
 
     // time-evolution
     for (int i = 1; i < sig.N_t; ++i) {
