@@ -255,7 +255,7 @@ void gstep() {
 //    sigplot(sig); return;
 
     stringstream ss;
-    ss << "gstep/";
+    ss << "gstep";
     save_folder(ss.str());
 
     device d("ntfet", ntfet, sig.V[0]);
