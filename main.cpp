@@ -220,9 +220,15 @@ void ntd_inverter(int part) {
     ss << "ntd_inverter";
     save_folder(ss.str());
 
-    inverter inv(ntfet, ptfet);
+    device n("ntfet", ntfet);
+    n.p.F[G] = .2; //match
+    n.p.update("matched_n");
+    device p("ptfet", ptfet);
+    p.p.F[G] = .2; //match
+    p.p.update("matched_p");
+    inverter inv(n, p);
 
-    vec V_in = linspace((part-1) * gvgop / 10., part * gvgop / 10. - gvgop / 10. / N, N);
+    vec V_in = linspace(part - 1, part * (1 - 1./N), N) * .2 / 10.;
     vec V_out(N);
 
     for (int i = 0; i < N; ++i) {
