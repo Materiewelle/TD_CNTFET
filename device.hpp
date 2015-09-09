@@ -369,7 +369,7 @@ void device::save() {
 
     for (int i = 0; i < N_t; ++i) {
         phi_mat.col(i) = phi[i].data;
-        n_mat.col(i) = n[i].total;
+        n_mat.col(i) = n[i].total / p.dx; // charge in element -> charge density
         I_mat.col(i) = I[i].total;
         V_mat(i, S) = V[i][S];
         V_mat(i, D) = V[i][D];

@@ -153,34 +153,6 @@ void output_test(double vd0, double vd1, double vg, int N) {
     output<true>(d.p, { { 0, vd0, vg } }, vd1, N);
 }
 
-void naive_transfer(double vd) {
-    stringstream ss;
-    ss << "naive/trans_vs=" << vd;
-    save_folder(ss.str());
-    device d("ntfet", ntfet);
-    d.p.l_sox = 5;
-    d.p.l_sg = 15;
-    d.p.l_g = 20;
-    d.p.l_dg = 10;
-    d.p.l_dox = 0;
-    d.p.update("updated");
-    transfer<true>(d.p, { { 0, vd, gvg0 } }, gvg1, gN);
-}
-
-void naive_output(double vg) {
-    stringstream ss;
-    ss << "naive/outp_vg=" << vg;
-    save_folder(ss.str());
-    device d("ntfet", ntfet);
-    d.p.l_sox = 5;
-    d.p.l_sg = 15;
-    d.p.l_g = 20;
-    d.p.l_dg = 10;
-    d.p.l_dox = 0;
-    d.p.update("updated");
-    output<true>(d.p, { { 0, gvd0, vg } }, gvd1, gN);
-}
-
 void scaling(double lg) {
     stringstream ss;
     ss << "scaling/lg=" << lg;
@@ -216,7 +188,7 @@ void separation(double ldg) {
 
 void final_transfer(double vd) {
     stringstream ss;
-    ss << "naive/trans_vs=" << vd;
+    ss << "final/trans_vs=" << vd;
     save_folder(ss.str());
     device d("ntfet", ntfet);
     transfer<true>(d.p, { { 0, vd, gvg0 } }, gvg1, gN);
@@ -224,7 +196,7 @@ void final_transfer(double vd) {
 
 void final_output(double vg) {
     stringstream ss;
-    ss << "naive/outp_vg=" << vg;
+    ss << "final/outp_vg=" << vg;
     save_folder(ss.str());
     device d("ntfet", ntfet);
     output<true>(d.p, { { 0, gvd0, vg } }, gvd1, gN);
@@ -241,13 +213,36 @@ void contacts() {
     output<true>(d.p, { { 0, gvd0, gvgop } }, gvd1, gN);
 }
 
-void gstep() {
+void ntd_inverter(int part) {
+    double N = 30;
+
+    stringstream ss;
+    ss << "ntd_inverter";
+    save_folder(ss.str());
+
+    inverter inv(ntfet, ptfet);
+
+    vec V_in = linspace((part-1) * gvgop / 10., part * gvgop / 10. - gvgop / 10. / N, N);
+    vec V_out(N);
+
+    for (int i = 0; i < N; ++i) {
+        cout << "\nstep " << i+1 << "/" << N << ": \n";
+        inv.steady_state({ 0, gvdop, V_in(i) });
+        V_out(i) = inv.get_output(0)->V;
+    }
+
+    mat data = join_horiz(V_in, V_out);
+    stringstream file;
+    file << "/part" << part << ".csv";
+    data.save(save_folder() + file.str(), csv_ascii);
+}
+
+void gstep(double rise) {
     double beg = 1e-12;
-    double len = 50e-15;
     double cool = 3e-12;
 
     signal<3> pre   = linear_signal<3>(beg,  { 0, .2, 0. }, { 0, .2, 0. }); // before
-    signal<3> slope = linear_signal<3>(len,  { 0, .2, 0. }, { 0, .2, .2 }); // while
+    signal<3> slope = linear_signal<3>(rise,  { 0, .2, 0. }, { 0, .2, .2 }); // while
     signal<3> after = linear_signal<3>(cool, { 0, .2, .2 }, { 0, .2, .2 }); // after
 
     signal<3> sig = pre + slope + after; // complete signal
@@ -255,14 +250,18 @@ void gstep() {
 //    sigplot(sig); return;
 
     stringstream ss;
-    ss << "gstep";
+    ss << "gstep/rise=" << rise;
     save_folder(ss.str());
 
-    device d("unmatched", ntfet, sig.V[0]);
+    device d("ntfet", ntfet, sig.V[0]);
     d.p.F[G] = .2; //match
     d.p.update("matched");
     d.steady_state();
     d.init_time_evolution(sig.N_t);
+
+    // get energy indices around fermi energy and init movie
+    std::vector<std::pair<int, int>> E_ind = movie::around_Ef(d, -0.05);
+    movie argo(d, E_ind, 100); // not for actual movie, only for thesis
 
     // perform time-evolution
     for (int i = 1; i < sig.N_t; ++i) {
@@ -275,7 +274,7 @@ void gstep() {
 }
 
 inline void gsquare(double f) {
-    double rise = 50e-15;
+    double rise = 100e-15;
     double fall = rise;
     double len = 3.2 / f; // we want 3 periods
 
@@ -287,7 +286,7 @@ inline void gsquare(double f) {
     ss << "gate_square_signal/" << "f=" << f;
     save_folder(ss.str());
 
-    device d("unmatched", ntfet, sig.V[0]);
+    device d("ntfet", ntfet, sig.V[0]);
     d.p.F[G] = .2; //match
     d.p.update("matched");
     d.steady_state();
@@ -316,7 +315,7 @@ void gsine(double f) { // compile with smaller dt!!!
     ss << "gsine/" << "f=" << f;
     save_folder(ss.str());
 
-    device d("unmatched", ntfet, sig.V[0]);
+    device d("ntfet", ntfet, sig.V[0]);
     d.p.F[G] = .2; //match
     d.p.update("matched");
     d.steady_state();
@@ -324,7 +323,7 @@ void gsine(double f) { // compile with smaller dt!!!
 
     // get energy indices around fermi energy and init movie
     std::vector<std::pair<int, int>> E_ind = movie::around_Ef(d, -0.05);
-    movie argo(d, E_ind);
+    movie argo(d, E_ind, 1);
 
     // time-evolution
     for (int i = 1; i < sig.N_t; ++i) {
@@ -365,12 +364,6 @@ int main(int argc, char ** argv) {
         output_test(stod(argv[3]), stod(argv[4]), stod(argv[5]), stoi(argv[6]));
 
     // ------------- thesis steady-state simulations --------------------
-    } else if (stype == "ntransfer" && argc == 4) {
-        // vs for parallelization
-        naive_transfer(stod(argv[3]));
-    } else if (stype == "noutput" && argc == 4) {
-        // vg for parallelization
-        naive_output(stod(argv[3]));
     } else if (stype == "scaling" && argc == 4) {
         // lg for parallelization
         scaling(stod(argv[3]));
@@ -388,11 +381,14 @@ int main(int argc, char ** argv) {
         final_output(stod(argv[3]));
     } else if (stype == "contacts" && argc == 3) {
         contacts();
+    } else if (stype == "ntd_inverter" && argc == 4) {
+        // part 1 to 10 for further parallelization
+        ntd_inverter(stod(argv[3]));
 
     // ------------- thesis time-dependent simulations ------------------
-    } else if (stype == "gstep" && argc == 3) {
+    } else if (stype == "gstep" && argc == 4) {
         // vs for parallelization
-        gstep();
+        gstep(stod(argv[3]));
     } else if (stype == "gsquare" && argc == 4) {
         // square wave of certain frequency on gate
         gsquare(stod(argv[3]));

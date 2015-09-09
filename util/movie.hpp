@@ -8,13 +8,12 @@
 class movie {
 public:
     // provide an initialized device object with solved steady-state
-    inline movie(device & dev, const std::vector<std::pair<int, int>> & E_i);
+    inline movie(device & dev, const std::vector<std::pair<int, int>> & E_i, int skip);
 
     static inline std::vector<std::pair<int, int>> around_Ef(const device & d, double dist);
 
 private:
     int frames; // the current number of frames that have been produced
-    static constexpr int frame_skip = 1;
 
     static constexpr double phimin = -1.5;
     static constexpr double phimax = +1.0;
@@ -25,6 +24,8 @@ private:
     gnuplot gp;
     arma::vec band_offset;
 
+    int frame_skip = 1;
+
     inline void frame();
 
     inline std::string output_folder(int lattice, double E0);
@@ -33,8 +34,8 @@ private:
     static inline const std::string & lattice_name(int i);
 };
 
-movie::movie(device & dev, const std::vector<std::pair<int, int> > &E_i)
-    : frames(0), d(dev), E_ind(E_i), band_offset(d.p.N_x) {
+movie::movie(device & dev, const std::vector<std::pair<int, int> > &E_i, int skip)
+    : frames(0), d(dev), E_ind(E_i), band_offset(d.p.N_x), frame_skip(skip) {
 
     // produce folder tree
     for (unsigned i = 0; i < E_ind.size(); ++i) {
@@ -64,19 +65,20 @@ movie::movie(device & dev, const std::vector<std::pair<int, int> > &E_i)
 }
 
 std::vector<std::pair<int, int>> movie::around_Ef(const device & d, double dist) {
-    std::vector<std::pair<int, int>> E_ind(2);
+    std::vector<std::pair<int, int>> E_ind(1);
 
     // in which band does Ef lie for this device?
     E_ind[0].first = d.p.F[S] < 0 ? LV : LC;
-    E_ind[1].first = d.p.F[D] < 0 ? RV : RC;
-
     // find energy closest to Ef (the last below is taken)
     auto begin = d.E0[E_ind[0].first].begin();
     auto end   = d.E0[E_ind[0].first].end();
     E_ind[0].second = std::lower_bound(begin, end, d.phi[0].s() + d.p.F[S] + dist) - begin;
-    begin = d.E0[E_ind[1].first].begin();
-    end   = d.E0[E_ind[1].first].end();
-    E_ind[1].second = std::lower_bound(begin, end, d.phi[0].d() + d.p.F[D] + dist) - begin;
+
+//    // waves comming from right:
+//    E_ind[1].first = d.p.F[D] < 0 ? RV : RC;
+//    begin = d.E0[E_ind[1].first].begin();
+//    end   = d.E0[E_ind[1].first].end();
+//    E_ind[1].second = std::lower_bound(begin, end, d.phi[0].d() + d.p.F[D] + dist) - begin;
 
     return E_ind;
 }

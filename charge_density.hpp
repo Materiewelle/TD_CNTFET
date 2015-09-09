@@ -17,10 +17,10 @@ static inline arma::cx_vec green_col(const device_params & p, const potential &,
 class charge_density {
 public:
     // adaptive integration parameters
-    static constexpr double E_min = -1.5;         // relative to potential
-    static constexpr double E_max = +1.5;         // relative to potential
-    static constexpr double rel_tol = 3e-3;       // subdivide an interval as long as the relative deviation is larger
-    static constexpr int initial_waypoints = 300; // divide into at least this number of smaller intervalls
+    static constexpr double E_min = -1.2;         // from branching point at S/D
+    static constexpr double E_max = +1.2;         // from branching point at S/D
+    static constexpr double rel_tol = 5e-3;       // subdivide an interval as long as the relative deviation is larger
+    static constexpr int initial_waypoints = 500; // divide into at least this number of smaller intervalls
 
     arma::vec lv;    // density due to states in v-band, induced from left
     arma::vec rv;    // density due to states in v-band, induced from right
@@ -454,7 +454,7 @@ arma::vec charge_density::get_n0(const device_params & p) {
     }
     ret.rows(p.dc.a, p.N_x - 1).fill(nc(1));
 
-    ret *= c::e; // /dx*dx omitted
+    ret *= c::e; // *dx/dx=1 omitted
 
     // save and return n0
     n0[p.name] = ret;
