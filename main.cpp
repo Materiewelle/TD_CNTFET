@@ -33,17 +33,17 @@
 static const geometry tfet_geometry {
     10.0, // eps_cnt
     25.0, // eps_ox
-     7.0, // l_sc
+    10.0, // l_sc
     15.0, // l_sox
      5.0, // l_sg
     30.0, // l_g
     30.0, // l_dg
-       0, // l_dox
-     7.0, // l_dc
+     2.0, // l_dox
+    10.0, // l_dc
      1.0, // r_cnt
      3.0, // d_ox
      2.0, // r_ext
-     0.4, // dx
+     0.5, // dx
      0.1  // dr
 };
 
@@ -129,16 +129,18 @@ static const double gvgop = .4;
 static const double gvd0 = 0.;
 static const double gvd1 = .5;
 static const double gvdop = .2;
-static const int gN = 960;
+static const int gN = 400;
 
 void voltage_point(double vs, double vd, double vg) {
     device d("ntfet", ntfet, {vs, vd, vg});
+    d.p.dx = .1; // for nicer figures
+    d.p.update("small_dx");
     d.steady_state();
     cout << "I = " << d.I[0].total[0] << std::endl;
     plot(make_pair(d.p.x, d.phi[0].data));
     potential::plot2D(d.p, { 0, vd, vg }, d.n[0]);
     plot(make_pair(d.p.x, d.n[0].total));
-    plot_ldos(d.p, d.phi[0], 2000, -1, 1);
+    plot_ldos(d.p, d.phi[0], 2000, -1, .7);
 }
 
 void transfer_test(double vg0, double vg1, double vd, int N) {
@@ -207,14 +209,14 @@ void contacts() {
     ss << "contacts";
     save_folder(ss.str());
     device d("ntfet", ntfetc);
-    d.p.dx = .1; // we need broader bands in the contacts
+    d.p.dx = .2; // we need broader bands in the contacts
     d.p.update("contacts");
     transfer<true>(d.p, { { 0, gvdop, gvg0 } }, gvg1, gN);
     output<true>(d.p, { { 0, gvd0, gvgop } }, gvd1, gN);
 }
 
 void ntd_inverter(int part) {
-    double N = 30;
+    double N = 40;
 
     stringstream ss;
     ss << "ntd_inverter";
@@ -230,7 +232,7 @@ void ntd_inverter(int part) {
     inverter inv(n.p, p.p);
 
     // points in this part
-    vec V_in = linspace(part - 1, part * (1 - 1./N), N) * .2 / 10.;
+    vec V_in = linspace(part - 1, part - 1. / N, N) * .2 / 10.;
 
     // compute voltage points
     vec V_out(N);
