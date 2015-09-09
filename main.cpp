@@ -220,23 +220,27 @@ void ntd_inverter(int part) {
     ss << "ntd_inverter";
     save_folder(ss.str());
 
+    // build inverter from matched devices
     device n("ntfet", ntfet);
     n.p.F[G] = .2; //match
     n.p.update("matched_n");
     device p("ptfet", ptfet);
-    p.p.F[G] = .2; //match
+    p.p.F[G] = -.2; //match
     p.p.update("matched_p");
-    inverter inv(n, p);
+    inverter inv(n.p, p.p);
 
+    // points in this part
     vec V_in = linspace(part - 1, part * (1 - 1./N), N) * .2 / 10.;
-    vec V_out(N);
 
+    // compute voltage points
+    vec V_out(N);
     for (int i = 0; i < N; ++i) {
         cout << "\nstep " << i+1 << "/" << N << ": \n";
         inv.steady_state({ 0, gvdop, V_in(i) });
         V_out(i) = inv.get_output(0)->V;
     }
 
+    // save
     mat data = join_horiz(V_in, V_out);
     stringstream file;
     file << "/part" << part << ".csv";
