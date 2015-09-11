@@ -84,7 +84,7 @@ static inline void plot_ldos(const device_params & p, const potential & phi, con
     gp << "unset key\n";
     gp << "unset colorbox\n";
 
-    gp << "set terminal pdf size 5,3\nset output 'lDOS.pdf'\n";
+    gp << "set terminal pdf size 3.5,2.5\nset output 'lDOS.pdf'\n";
 
     arma::mat lDOS = get_lDOS(p, phi, N_grid, E);
     gp.set_background(p.x, E, arma::log(lDOS));
@@ -101,30 +101,36 @@ static inline void plot_ldos(const device_params & p, const potential & phi, con
     gp.add(p.x, cband);
     gp.add(p.x, phi.data);
 
+
     unsigned N_s = std::round(p.N_sc + 0.5 * p.N_sox);
     arma::vec fermi_l(N_s);
     fermi_l.fill(p.F[S] + phi.s());
     arma::vec x_l = p.x(arma::span(0, N_s-1));
     gp.add(x_l, fermi_l);
+    double phi_s = phi.data((p.sc.b - p.sc.a) / 2);
+    gp << "set label \"E_{f,S}\" at " << .5 * (p.x(p.sc.b) - p.x(p.sc.a)) << "," << phi_s - .7 * p.E_g << " center tc rgb RWTH_Schwarz front\n";
 
     unsigned N_d = std::round(p.N_dc + 0.5 * p.N_dox);
     arma::vec fermi_r(N_d);
     fermi_r.fill(p.F[D] + phi.d());
     arma::vec x_r = p.x(arma::span(p.N_x-N_d, p.N_x-1));
     gp.add(x_r, fermi_r);
+    double phi_d = phi.data(p.dc.a + (p.dc.b - p.dc.a) / 2);
+    gp << "set label \"E_{f,D}\" at " << p.x(p.dc.a) + .5 * (p.x(p.dc.b) - p.x(p.dc.a)) << "," << phi_d + .7 * p.E_g << " center tc rgb RWTH_Schwarz front\n";
 
-    gp << "set style line 1 lt 1 lc rgb RWTH_Orange lw 2\n";
-    gp << "set style line 2 lt 1 lc rgb RWTH_Orange lw 2\n";
-    gp << "set style line 3 lt 1 lc rgb RWTH_Rot lw 2\n";
-    gp << "set style line 4 lt 3 lc rgb RWTH_Schwarz lw 2\n";
-    gp << "set style line 5 lt 3 lc rgb RWTH_Schwarz lw 2\n";
+    gp << "set style line 1 lc rgb RWTH_Orange lw 2\n";
+    gp << "set style line 2 lc rgb RWTH_Orange lw 2\n";
+    gp << "set style line 3 lc rgb RWTH_Rot lw 2\n";
+    gp << "set style line 4 dt 2 lc rgb RWTH_Schwarz lw 2\n";
+    gp << "set style line 5 dt 2 lc rgb RWTH_Schwarz lw 2\n";
 
     double phi_naut = phi.data(p.g.a + p.N_g / 2); // middle of gate
-    double indicator_max = phi_naut + .85 * p.E_g;
-    double indicator_min = phi_naut - .85 * p.E_g;
+    double indicator_max = phi_naut + p.E_g;
+    double indicator_min = phi_naut - p.E_g;
+    gp << "set label \"gate\" at " << p.x(p.g.a + p.N_g / 2) << "," << phi_naut - .8 * p.E_g << " center tc rgb RWTH_Schwarz front\n";
 
-    gp << "set arrow from " << p.x(p.g.a) << "," << indicator_min << " to " << p.x(p.g.a) << "," << indicator_max << " nohead front lt 2 lc rgb RWTH_Schwarz_75\n";
-    gp << "set arrow from " << p.x(p.g.b) << "," << indicator_min << " to " << p.x(p.g.b) << "," << indicator_max << " nohead front lt 2 lc rgb RWTH_Schwarz_75\n";
+    gp << "set arrow from " << p.x(p.g.a) << "," << indicator_min << " to " << p.x(p.g.a) << "," << indicator_max << " nohead front dt 3 lc rgb RWTH_Schwarz\n";
+    gp << "set arrow from " << p.x(p.g.b) << "," << indicator_min << " to " << p.x(p.g.b) << "," << indicator_max << " nohead front dt 3 lc rgb RWTH_Schwarz\n";
 
     gp.plot();
 }

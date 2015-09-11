@@ -133,14 +133,14 @@ static const int gN = 400;
 
 void voltage_point(double vs, double vd, double vg) {
     device d("ntfet", ntfet, {vs, vd, vg});
-    d.p.dx = .1; // for nicer figures
+    d.p.dx = .2; // for nicer figures
     d.p.update("small_dx");
     d.steady_state();
     cout << "I = " << d.I[0].total[0] << std::endl;
     plot(make_pair(d.p.x, d.phi[0].data));
     potential::plot2D(d.p, { 0, vd, vg }, d.n[0]);
     plot(make_pair(d.p.x, d.n[0].total));
-    plot_ldos(d.p, d.phi[0], 2000, -1, .7);
+    plot_ldos(d.p, d.phi[0], 1000, -1, .7);
 }
 
 void transfer_test(double vg0, double vg1, double vd, int N) {
@@ -204,14 +204,25 @@ void final_output(double vg) {
     output<true>(d.p, { { 0, gvd0, vg } }, gvd1, gN);
 }
 
-void contacts() {
+void contacts_transfer(double lsox) {
     stringstream ss;
-    ss << "contacts";
+    ss << "contacts/lsox=" << lsox;
     save_folder(ss.str());
     device d("ntfet", ntfetc);
     d.p.dx = .2; // we need broader bands in the contacts
+    d.p.l_sox = lsox;
     d.p.update("contacts");
     transfer<true>(d.p, { { 0, gvdop, gvg0 } }, gvg1, gN);
+}
+
+void contacts_output(double lsox) {
+    stringstream ss;
+    ss << "contacts/lsox=" << lsox;
+    save_folder(ss.str());
+    device d("ntfet", ntfetc);
+    d.p.dx = .2; // we need broader bands in the contacts
+    d.p.l_sox = lsox;
+    d.p.update("contacts");
     output<true>(d.p, { { 0, gvd0, gvgop } }, gvd1, gN);
 }
 
@@ -391,8 +402,10 @@ int main(int argc, char ** argv) {
     } else if (stype == "foutput" && argc == 4) {
         // vg for parallelization
         final_output(stod(argv[3]));
-    } else if (stype == "contacts" && argc == 3) {
-        contacts();
+    } else if (stype == "contacts_trans" && argc == 4) {
+        contacts_transfer(stod(argv[3]));
+    } else if (stype == "contacts_outp" && argc == 4) {
+        contacts_output(stod(argv[3]));
     } else if (stype == "ntd_inverter" && argc == 4) {
         // part 1 to 10 for further parallelization
         ntd_inverter(stod(argv[3]));
