@@ -392,12 +392,7 @@ void inverter_square (double f) {
 
     inverter inv(n, p, C);
     inv.steady_state(sig.V[0]);
-
-    // time-evolution:
-    for (int i = 1; i < sig.N_t; ++i) {
-//        inv.inputs[VIN]->V = sig.V[i][G];
-        inv.time_step(sig.V[i]);
-    }
+    inv.time_evolution(sig);
     inv.save();
 }
 
