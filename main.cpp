@@ -358,6 +358,20 @@ void gsine(double f) { // compile with smaller dt!!!
     d.save();
 }
 
+void oscillator (double C) {
+    stringstream ss;
+    ss << "ring_oscillator";
+    save_folder(ss.str());
+
+    double T = 100e-12;
+
+    ring_oscillator<3> ro(ntfet, ptfet, C);
+    ro.time_evolution(signal<2>(T, voltage<2>{ 0.0, 0.2 }));
+    ro.save<true>();
+}
+
+
+
 int main(int argc, char ** argv) {
     // disable nested parallelism globally
     omp_set_nested(0);
@@ -420,6 +434,9 @@ int main(int argc, char ** argv) {
     } else if (stype == "gsine" && argc == 4) {
         // sine wave of certain frequency on gate
         gsine(stod(argv[3]));
+    } else if (stype == "oscillator" && argc == 4) {
+        // sine wave of certain frequency on gate
+        oscillator(stod(argv[3]));
 
 
 
