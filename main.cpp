@@ -288,9 +288,7 @@ void gstep(double rise) {
 
     // perform time-evolution
     for (int i = 1; i < sig.N_t; ++i) {
-        for (int term : {S, D, G}) {
-            d.contacts[G]->V = sig.V[i][term];
-        }
+        d.contacts[G]->V = sig.V[i][G];
         d.time_step();
     }
     d.save();
@@ -317,9 +315,7 @@ inline void gsquare(double f) {
 
     // time-evolution:
     for (int i = 1; i < sig.N_t; ++i) {
-        for (int term : {S, D, G}) {
-            d.contacts[G]->V = sig.V[i][term];
-        }
+        d.contacts[G]->V = sig.V[i][G];
         d.time_step();
     }
     d.save();
@@ -350,9 +346,7 @@ void gsine(double f) { // compile with smaller dt!!!
 
     // time-evolution
     for (int i = 1; i < sig.N_t; ++i) {
-        for (int term : {S, D, G}) {
-            d.contacts[G]->V = sig.V[i][term];
-        }
+        d.contacts[G]->V = sig.V[i][G];
         d.time_step();
     }
     d.save();
@@ -375,6 +369,36 @@ void oscillator (double C) {
     ring_oscillator<3> ro(n, p, C);
     ro.time_evolution(signal<2>(T, voltage<2>{ 0.0, 0.2 }));
     ro.save<true>();
+}
+
+void inverter_square (double f) {
+    stringstream ss;
+    ss << "inverter_square/f=" << f;
+    save_folder(ss.str());
+
+    device_params n(ntfet);
+    n.F[G] = .2;
+    n.update("n_matched");
+    device_params p(ptfet);
+    p.F[G] = -.2;
+    p.update("p_matched");
+
+    double C = 10e-18;
+    double rise = 100e-15;
+    double fall = rise;
+    double len = 3.2 / f; // we want 3 periods
+
+    signal<3> sig = square_signal<3>(len, { 0, .2, .0 }, { 0, .2, .2}, f, rise, fall);
+
+    inverter inv(n, p, C);
+    inv.steady_state(sig.V[0]);
+
+    // time-evolution:
+    for (int i = 1; i < sig.N_t; ++i) {
+//        inv.inputs[VIN]->V = sig.V[i][G];
+        inv.time_step(sig.V[i]);
+    }
+    inv.save();
 }
 
 

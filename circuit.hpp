@@ -31,7 +31,7 @@ public:
 
     inline void time_evolution(const signal<N_in> & s);
 
-    template<bool plots>
+    template<bool plots = false>
     inline void save();
 
 protected:
