@@ -365,7 +365,14 @@ void oscillator (double C) {
 
     double T = 100e-12;
 
-    ring_oscillator<3> ro(ntfet, ptfet, C);
+    device_params n(ntfet);
+    n.F[G] = .2;
+    n.update("n_matched");
+    device_params p(ptfet);
+    p.F[G] = -.2;
+    p.update("p_matched");
+
+    ring_oscillator<3> ro(n, p, C);
     ro.time_evolution(signal<2>(T, voltage<2>{ 0.0, 0.2 }));
     ro.save<true>();
 }
