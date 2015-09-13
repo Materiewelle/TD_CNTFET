@@ -15,7 +15,7 @@ namespace c {
     static constexpr double m_e    = 9.10938188E-31;       // electron mass
     static constexpr double T      = 300;                  // Temperature in Kelvin
 
-    static constexpr double dt     = 5e-15;                // Length of time-step
+    static constexpr double dt     = 2e-15;                // Length of time-step
     static constexpr double g      = 0.5 * dt * e / h_bar; // gamma
 
     static constexpr double inf    = std::numeric_limits<double>::infinity();

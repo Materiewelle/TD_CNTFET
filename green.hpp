@@ -84,7 +84,7 @@ static inline void plot_ldos(const device_params & p, const potential & phi, con
     gp << "unset key\n";
     gp << "unset colorbox\n";
 
-    gp << "set terminal pdf size 3.5,2.5\nset output 'lDOS.pdf'\n";
+    gp << "set terminal pdf size 5,3\nset output 'lDOS.pdf'\n";
 
     arma::mat lDOS = get_lDOS(p, phi, N_grid, E);
     gp.set_background(p.x, E, arma::log(lDOS));

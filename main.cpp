@@ -33,8 +33,8 @@
 static const geometry tfet_geometry {
     10.0, // eps_cnt
     25.0, // eps_ox
-    10.0, // l_sc
-    20.0, // l_sox
+     0.7, // l_sc
+     3.0, // l_sox
      5.0, // l_sg
     30.0, // l_g
     30.0, // l_dg
@@ -117,10 +117,22 @@ static const device_params ntfet("ntfet", tfet_geometry, ntfet_model);
 static const device_params ntfetc("ntfetc", tfet_geometry, ntfetc_model);
 static const device_params ptfet("ptfet", tfet_geometry, ptfet_model);
 
-//------- simulation routines ---------------
-
 using namespace arma;
 using namespace std;
+
+double capacitance(const device_params & p) {
+    double csg = c::eps_0 * M_PI * (p.R * p. R - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_sg * 1e-9;
+    double cdg = c::eps_0 * M_PI * (p.R * p. R - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_dg * 1e-9;
+    double czyl = 2 * M_PI * c::eps_0 * p.eps_ox * p.l_g / std::log((p.r_cnt + p.d_ox) / p.r_cnt) * 1e-9;
+
+    cout << "C_sg  = " << csg << endl;
+    cout << "C_dg  = " << cdg << endl;
+    cout << "C_zyl = " << czyl << endl;
+    cout << "C_g   = " << csg + cdg + czyl << endl;
+}
+
+
+//------- simulation routines ---------------
 
 // global steady-state curve parameters:
 static const double gvg0 = -.3;
@@ -383,8 +395,8 @@ void inverter_square (double f) {
     p.F[G] = -.2;
     p.update("p_matched");
 
-    double C = 10e-18;
-    double rise = 100e-15;
+    double C = ;
+    double rise = 300e-15;
     double fall = rise;
     double len = 3.2 / f; // we want 3 periods
 
@@ -415,8 +427,12 @@ int main(int argc, char ** argv) {
     // second argument chooses the type of simulation
     string stype(argv[2]);
 
+    if (stype == "Cg" && argc == 3) {
+        // estimate C_g
+        capacitance(ntfet);
+
     // ------------- test functions -------------------------------------
-    if (stype == "point" && argc == 6) {
+    } else if (stype == "point" && argc == 6) {
         // Vs, Vd, Vg
         voltage_point(stod(argv[3]), stod(argv[4]), stod(argv[5]));
     } else if (stype == "transtest" && argc == 7) {
