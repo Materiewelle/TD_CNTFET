@@ -468,7 +468,9 @@ int main(int argc, char ** argv) {
     } else if (stype == "oscillator" && argc == 4) {
         // sine wave of certain frequency on gate
         oscillator(stod(argv[3]));
-
+    } else if (stype == "inv_square" && argc == 4) {
+        // sine wave of certain frequency on gate
+        inverter_square(stod(argv[3]));
 
 
     } else {
