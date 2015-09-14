@@ -33,13 +33,13 @@
 static const geometry tfet_geometry {
     10.0, // eps_cnt
     25.0, // eps_ox
-     0.7, // l_sc
-     3.0, // l_sox
+     8.0, // l_sc
+    12.0, // l_sox
      5.0, // l_sg
     30.0, // l_g
     30.0, // l_dg
      2.0, // l_dox
-    10.0, // l_dc
+     8.0, // l_dc
      1.0, // r_cnt
      3.0, // d_ox
      2.0, // r_ext
