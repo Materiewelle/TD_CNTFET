@@ -128,7 +128,9 @@ double capacitance(const device_params & p) {
     cout << "C_sg  = " << csg << endl;
     cout << "C_dg  = " << cdg << endl;
     cout << "C_zyl = " << czyl << endl;
+    double Cg = csg + cdg + czyl;
     cout << "C_g   = " << csg + cdg + czyl << endl;
+    return Cg;
 }
 
 
@@ -395,7 +397,7 @@ void inverter_square (double f) {
     p.F[G] = -.2;
     p.update("p_matched");
 
-    double C = capacitance(n);
+    double C = 10e-18;//capacitance(n);
     double rise = 300e-15;
     double fall = rise;
     double len = 3.2 / f; // we want 3 periods
