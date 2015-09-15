@@ -324,15 +324,17 @@ inline void gsquare(double f) {
     device d("ntfet", ntfet, sig.V[0]);
     d.p.F[G] = .2; //match
     d.p.update("matched");
-    d.steady_state();
-    d.init_time_evolution(sig.N_t);
+//    d.steady_state();
+//    d.init_time_evolution(sig.N_t);
 
     // time-evolution:
-    for (int i = 1; i < sig.N_t; ++i) {
-        d.contacts[G]->V = sig.V[i][G];
-        d.time_step();
-    }
-    d.save();
+//    for (int i = 1; i < sig.N_t; ++i) {
+//        d.contacts[G]->V = sig.V[i][G];
+//        d.time_step();
+//    }
+//    d.save();
+
+    quasi_static(sig, d.p);
 }
 
 void gsine(double f) { // compile with smaller dt!!!
