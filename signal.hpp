@@ -125,21 +125,21 @@ static void sigplot(signal<3> sig) {
     plot(vs, vd, vg);
 }
 
-static void quasi_static(const signal<3> & sig, const device_params & p, int N = 400) {
+static void quasi_static(const signal<3> & sig, const device & d, int N = 400) {
     int step = sig.N_t / N;
     std::vector<voltage<3>> points(N);
     for (int i = 0; i < N; ++i) {
         points[i] = sig.V[i * step];
     }
     // get current points in parallel
-    std::vector<current> i_quasi = curve(p, points);
+    std::vector<current> i_quasi = curve(d.p, points);
     // save for plotting
     arma::mat CSV (N, 2);
     for (int j = 0; j < N; ++j) {
-        CSV(j, 0) = c::dt * step;
+        CSV(j, 0) = c::dt * step * j;
         CSV(j, 1) = i_quasi[j].total(0);
     }
-    CSV.save(save_folder() + "/I_quasi.csv", arma::csv_ascii);
+    CSV.save(save_folder() + "/" + d.name + "/I_quasi.csv", arma::csv_ascii);
 }
 
 #endif

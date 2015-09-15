@@ -136,7 +136,9 @@ double capacitance(const device_params & p) {
 void to_CSV(const string infile) {
     mat in;
     in.load(infile);
-    in.save(infile + ".csv");
+    mat out = trans(in);
+    out = out.col(out.n_cols - 1); // just I_d
+    out.save(infile + ".csv", arma::csv_ascii);
 }
 
 
@@ -312,6 +314,9 @@ void gstep(double rise) {
         d.time_step();
     }
     d.save();
+
+    std::cout << "\nGetting quasi-static current curve...\n";
+    quasi_static(sig, d);
 }
 
 inline void gsquare(double f) {
@@ -330,17 +335,18 @@ inline void gsquare(double f) {
     device d("ntfet", ntfet, sig.V[0]);
     d.p.F[G] = .2; //match
     d.p.update("matched");
-//    d.steady_state();
-//    d.init_time_evolution(sig.N_t);
+    d.steady_state();
+    d.init_time_evolution(sig.N_t);
 
     // time-evolution:
-//    for (int i = 1; i < sig.N_t; ++i) {
-//        d.contacts[G]->V = sig.V[i][G];
-//        d.time_step();
-//    }
-//    d.save();
+    for (int i = 1; i < sig.N_t; ++i) {
+        d.contacts[G]->V = sig.V[i][G];
+        d.time_step();
+    }
+    d.save();
+
     std::cout << "\nGetting quasi-static current curve...\n";
-    quasi_static(sig, d.p);
+    quasi_static(sig, d);
 }
 
 void gsine(double f) { // compile with smaller dt!!!
@@ -372,6 +378,11 @@ void gsine(double f) { // compile with smaller dt!!!
         d.time_step();
     }
     d.save();
+
+    std::cout << "\nGetting quasi-static current curve...\n";
+//    std::string subfolder(save_folder() + "/" + d.name);
+//    system("mkdir -p " + subfolder);
+    quasi_static(sig, d);
 }
 
 void oscillator (double C) {
