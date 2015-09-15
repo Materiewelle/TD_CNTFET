@@ -133,6 +133,12 @@ double capacitance(const device_params & p) {
     return Cg;
 }
 
+void to_CSV(const string infile) {
+    mat in;
+    in.load(infile);
+    in.save(infile + ".csv");
+}
+
 
 //------- simulation routines ---------------
 
@@ -333,7 +339,7 @@ inline void gsquare(double f) {
 //        d.time_step();
 //    }
 //    d.save();
-
+    std::cout << "\nGetting quasi-static current curve...\n";
     quasi_static(sig, d.p);
 }
 
@@ -434,6 +440,9 @@ int main(int argc, char ** argv) {
     if (stype == "Cg" && argc == 3) {
         // estimate C_g
         capacitance(ntfet);
+    } else if (stype == "to_CSV" && argc == 4) {
+        // full path to .arma file
+        to_CSV(string(argv[3]));
 
     // ------------- test functions -------------------------------------
     } else if (stype == "point" && argc == 6) {
