@@ -89,7 +89,7 @@ bool ring_oscillator<N>::steady_state(const voltage<2> & V) {
     this->inputs[VDD]->V = V[VDD];
 
     // strength of the kick (relative to Vdd)
-    static constexpr double kick = 1e-2;
+    static constexpr double kick = 1e-4;
 
     // give the inverter inputs a small kick according to their phase
     for (int i = 0; i < N; ++i) {

@@ -120,22 +120,6 @@ static const device_params ptfet("ptfet", tfet_geometry, ptfet_model);
 using namespace arma;
 using namespace std;
 
-double capacitance(const device_params & p) {
-    static constexpr double C_gQM = 1.1e-18;
-    double csg = c::eps_0 * M_PI * (p.R * p. R - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_sg * 1e-9;
-    double cdg = c::eps_0 * M_PI * (p.R * p. R - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_dg * 1e-9;
-    double czyl = 2 * M_PI * c::eps_0 * p.eps_ox * p.l_g / std::log((p.r_cnt + p.d_ox) / p.r_cnt) * 1e-9;
-    cout << "C_sg  = " << csg << endl;
-    cout << "C_dg  = " << cdg << endl;
-    cout << "C_zyl = " << czyl << endl;
-    double CgGeo = csg + cdg + czyl;
-    cout << "-> C_g(geo)   = " << CgGeo << endl;
-    cout << "C_g(QM) = " << C_gQM << endl;
-    double Cg = 1 / (1/CgGeo + 1/C_gQM);
-    cout << "--------------------------\n-> C_g = " << Cg << endl;
-    return Cg;
-}
-
 void to_CSV(const string infile) {
     mat in;
     in.load(infile);
@@ -166,6 +150,67 @@ void voltage_point(double vs, double vd, double vg) {
     potential::plot2D(d.p, { 0, vd, vg }, d.n[0]);
     plot(make_pair(d.p.x, d.n[0].total / d.p.dx));
     plot_ldos(d.p, d.phi[0], 1000, -1, .7);
+}
+
+double quantum_capacitance(double vg0, double vg1) {
+    stringstream ss;
+    ss << "quantum_capacitance/vg0=" << vg0 << "_vg1=" << vg1;
+    save_folder(ss.str());
+
+    device n0("n0", ntfet, {0., .2, vg0});
+//    n0.p.F[G] = .2; //match
+//    n0.p.dx = .1;
+    n0.p.update("matched_n0");
+    device n1("n1", ntfet, {0., .2, vg1});
+//    n1.p.F[G] = .2; //match
+//    n1.p.dx = .1;
+    n1.p.update("matched_n1");
+
+    #pragma omp parallel sections
+    {
+        #pragma omp  section
+        {
+            n0.steady_state();
+        }
+        #pragma omp  section
+        {
+            n1.steady_state();
+        }
+    }
+
+    // save charge density for plotting:
+    vec rho0 = n0.n[0].total;
+    rho0.save(save_folder() + "/rho0.csv", csv_ascii);
+    vec rho1 = n1.n[0].total;
+    rho0.save(save_folder() + "/rho1.csv", csv_ascii);
+
+    // integrate charge and take difference
+    double Q_vg0 = 0;
+    double Q_vg1 = 0;
+    for (int i = 0; i < n0.p.N_x; ++i) {
+        Q_vg0 += n0.n[0].total(i);
+        Q_vg1 += n1.n[0].total(i);
+    }
+    cout << "dQ_g = " << Q_vg0 - Q_vg1 << " C" << endl;
+    double C_q = (Q_vg0 - Q_vg1) / (vg1 - vg0);
+    cout << "dQ_g/dV_g = " << C_q << " F" << endl;
+    return C_q;
+}
+
+double capacitance(const device_params & p) {
+//    static constexpr double C_gQM = 1.1e-18; // quantum capacitance
+    static constexpr double d_cont = 15; // thickness of contacts in nm
+    double csg = c::eps_0 * M_PI * (d_cont * d_cont - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_sg * 1e-9;
+    double cdg = c::eps_0 * M_PI * (d_cont * d_cont - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_dg * 1e-9;
+    double czyl = 2 * M_PI * c::eps_0 * p.eps_ox * p.l_g / std::log((p.r_cnt + p.d_ox) / p.r_cnt) * 1e-9;
+    cout << "C_sg  = " << csg << " F" << endl;
+    cout << "C_dg  = " << cdg << " F" << endl;
+    cout << "C_zyl = " << czyl << " F" << endl;
+    cout << "Getting quantum capacitance..." << endl;
+    double C_gQM = quantum_capacitance(.2, .4);
+    double Cg = csg + cdg + 1 / (1/czyl + 1/C_gQM);
+    cout << "--------------------------\n-> C_g = " << Cg << " F" << endl;
+    return Cg;
 }
 
 void transfer_test(double vg0, double vg1, double vd, int N) {
@@ -454,8 +499,11 @@ int main(int argc, char ** argv) {
     string stype(argv[2]);
 
     if (stype == "Cg" && argc == 3) {
-        // estimate C_g
+        // estimate total C_g
         capacitance(ntfet);
+    } else if (stype == "Cq" && argc == 5) {
+        // full path to .arma file
+        quantum_capacitance(stod(argv[3]), stod(argv[4]));
     } else if (stype == "to_CSV" && argc == 4) {
         // full path to .arma file
         to_CSV(string(argv[3]));
