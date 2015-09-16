@@ -402,7 +402,7 @@ void oscillator () {
     p.F[G] = -.2;
     p.update("p_matched");
 
-    double C = capacitance(n);
+    double C = 2 * capacitance(n); // we have 2 devices
 
     ring_oscillator<3> ro(n, p, C);
     ro.time_evolution(signal<2>(T, voltage<2>{ 0.0, 0.2 }));
@@ -421,7 +421,7 @@ void inverter_square (double f) {
     p.F[G] = -.2;
     p.update("p_matched");
 
-    double C = capacitance(n);
+    double C = 2 * capacitance(n); // we have 2 devices
     double rise = 300e-15;
     double fall = rise;
     double len = 3.2 / f; // we want 3 periods
