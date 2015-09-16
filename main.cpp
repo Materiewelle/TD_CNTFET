@@ -121,15 +121,18 @@ using namespace arma;
 using namespace std;
 
 double capacitance(const device_params & p) {
+    static constexpr double C_gQM = 1.1e-18;
     double csg = c::eps_0 * M_PI * (p.R * p. R - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_sg * 1e-9;
     double cdg = c::eps_0 * M_PI * (p.R * p. R - (p.r_cnt + p.d_ox) * (p.r_cnt + p.d_ox)) / p.l_dg * 1e-9;
     double czyl = 2 * M_PI * c::eps_0 * p.eps_ox * p.l_g / std::log((p.r_cnt + p.d_ox) / p.r_cnt) * 1e-9;
-
     cout << "C_sg  = " << csg << endl;
     cout << "C_dg  = " << cdg << endl;
     cout << "C_zyl = " << czyl << endl;
-    double Cg = csg + cdg + czyl;
-    cout << "C_g   = " << csg + cdg + czyl << endl;
+    double CgGeo = csg + cdg + czyl;
+    cout << "-> C_g(geo)   = " << CgGeo << endl;
+    cout << "C_g(QM) = " << C_gQM << endl;
+    double Cg = 1 / (1/CgGeo + 1/C_gQM);
+    cout << "--------------------------\n-> C_g = " << Cg << endl;
     return Cg;
 }
 
@@ -161,7 +164,7 @@ void voltage_point(double vs, double vd, double vg) {
     cout << "I = " << d.I[0].total[0] << std::endl;
     plot(make_pair(d.p.x, d.phi[0].data));
     potential::plot2D(d.p, { 0, vd, vg }, d.n[0]);
-    plot(make_pair(d.p.x, d.n[0].total));
+    plot(make_pair(d.p.x, d.n[0].total / d.p.dx));
     plot_ldos(d.p, d.phi[0], 1000, -1, .7);
 }
 
@@ -385,7 +388,7 @@ void gsine(double f) { // compile with smaller dt!!!
     quasi_static(sig, d);
 }
 
-void oscillator (double C) {
+void oscillator () {
     stringstream ss;
     ss << "ring_oscillator";
     save_folder(ss.str());
@@ -398,6 +401,8 @@ void oscillator (double C) {
     device_params p(ptfet);
     p.F[G] = -.2;
     p.update("p_matched");
+
+    double C = capacitance(n);
 
     ring_oscillator<3> ro(n, p, C);
     ro.time_evolution(signal<2>(T, voltage<2>{ 0.0, 0.2 }));
@@ -500,9 +505,9 @@ int main(int argc, char ** argv) {
     } else if (stype == "gsine" && argc == 4) {
         // sine wave of certain frequency on gate
         gsine(stod(argv[3]));
-    } else if (stype == "oscillator" && argc == 4) {
+    } else if (stype == "oscillator" && argc == 3) {
         // sine wave of certain frequency on gate
-        oscillator(stod(argv[3]));
+        oscillator();
     } else if (stype == "inv_square" && argc == 4) {
         // sine wave of certain frequency on gate
         inverter_square(stod(argv[3]));
