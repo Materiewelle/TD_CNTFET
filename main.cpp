@@ -474,7 +474,6 @@ void inverter_square (double f) {
     signal<3> sig = square_signal<3>(len, { 0, .2, .0 }, { 0, .2, .2}, f, rise, fall);
 
     inverter inv(n, p, C);
-    inv.steady_state(sig.V[0]);
     inv.time_evolution(sig);
     inv.save();
 }
