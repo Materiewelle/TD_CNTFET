@@ -413,23 +413,23 @@ void gsine(double f) { // compile with smaller dt!!!
     device d("ntfet", ntfet, sig.V[0]);
     d.p.F[G] = .2; //match
     d.p.update("matched");
-    d.steady_state();
-    d.init_time_evolution(sig.N_t);
+//    d.steady_state();
+//    d.init_time_evolution(sig.N_t);
 
-    // get energy indices around fermi energy and init movie
-    std::vector<std::pair<int, int>> E_ind = movie::around_Ef(d, -0.05);
-    movie argo(d, E_ind, 1);
+//    // get energy indices around fermi energy and init movie
+//    std::vector<std::pair<int, int>> E_ind = movie::around_Ef(d, -0.05);
+//    movie argo(d, E_ind, 1);
 
-    // time-evolution
-    for (int i = 1; i < sig.N_t; ++i) {
-        d.contacts[G]->V = sig.V[i][G];
-        d.time_step();
-    }
-    d.save();
+//    // time-evolution
+//    for (int i = 1; i < sig.N_t; ++i) {
+//        d.contacts[G]->V = sig.V[i][G];
+//        d.time_step();
+//    }
+//    d.save();
 
     std::cout << "\nGetting quasi-static current curve...\n";
-//    std::string subfolder(save_folder() + "/" + d.name);
-//    system("mkdir -p " + subfolder);
+    std::string subfolder(save_folder() + "/" + d.name);
+    system("mkdir -p " + subfolder);
     quasi_static(sig, d);
 }
 
