@@ -427,9 +427,9 @@ void gsine(double f) { // compile with smaller dt!!!
     }
     d.save();
 
-//    std::cout << "\nGetting quasi-static current curve...\n";
+    std::cout << "\nGetting quasi-static current curve...\n";
 //    std::string subfolder(save_folder() + "/" + d.name);
-    system("mkdir -p " + subfolder);
+//    system("mkdir -p " + subfolder);
     quasi_static(sig, d);
 }
 
