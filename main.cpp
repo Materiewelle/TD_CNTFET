@@ -438,7 +438,7 @@ void oscillator () {
     ss << "ring_oscillator";
     save_folder(ss.str());
 
-    double T = 20e-12;
+    double T = 100e-12;
 
     device_params n(ntfet);
     n.F[G] = .2;
