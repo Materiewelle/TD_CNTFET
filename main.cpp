@@ -124,7 +124,8 @@ void to_CSV(const string infile) {
     mat in;
     in.load(infile);
 //    mat out = trans(in);
-    mat out = in.col(in.n_cols - 1); // just I_d
+    mat out = in;
+//    mat out = in.col(in.n_cols - 1); // just I_d
     out.save(infile + ".csv", arma::csv_ascii);
 }
 
@@ -466,7 +467,7 @@ void inverter_square (double f) {
     p.F[G] = -.2;
     p.update("p_matched");
 
-    double C = capacitance(n); // fan-out is one
+    double C = 2 * capacitance(n); // fan-out of two
     double rise = 300e-15;
     double fall = rise;
     double len = 3.2 / f; // we want 3 periods
