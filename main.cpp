@@ -468,7 +468,7 @@ void inverter_square (double f) {
     p.update("p_matched");
 
     double C = 2 * capacitance(n); // fan-out of two
-    double rise = 300e-15;
+    double rise = 100e-15;
     double fall = rise;
     double len = 3.2 / f; // we want 3 periods
 
