@@ -41,7 +41,7 @@ static const geometry tfet_geometry {
      2.0, // l_dox
     10.0, // l_dc
      1.0, // r_cnt
-     5.0, // d_ox
+     3.0, // d_ox
      2.0, // r_ext
      0.5, // dx
      0.1  // dr
@@ -123,8 +123,8 @@ using namespace std;
 void to_CSV(const string infile) {
     mat in;
     in.load(infile);
-    mat out = trans(in);
-    out = out.col(out.n_cols - 1); // just I_d
+//    mat out = trans(in);
+    mat out = in.col(in.n_cols - 1); // just I_d
     out.save(infile + ".csv", arma::csv_ascii);
 }
 
@@ -466,7 +466,7 @@ void inverter_square (double f) {
     p.F[G] = -.2;
     p.update("p_matched");
 
-    double C = 2 * capacitance(n); // we have 2 devices
+    double C = capacitance(n); // fan-out is one
     double rise = 300e-15;
     double fall = rise;
     double len = 3.2 / f; // we want 3 periods
@@ -492,7 +492,6 @@ int main(int argc, char ** argv) {
     // first argument is always the number of threads
     // (can not be more than the number specified when compiling openBLAS)
     omp_set_num_threads(stoi(argv[1]));
-
 
     // second argument chooses the type of simulation
     string stype(argv[2]);
