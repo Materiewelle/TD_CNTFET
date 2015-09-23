@@ -33,13 +33,13 @@
 static const geometry tfet_geometry {
     10.0, // eps_cnt
     25.0, // eps_ox
-    10.0, // l_sc
+     5.0, // l_sc
     20.0, // l_sox
      5.0, // l_sg
     30.0, // l_g
     30.0, // l_dg
      2.0, // l_dox
-    10.0, // l_dc
+     5.0, // l_dc
      1.0, // r_cnt
      3.0, // d_ox
      2.0, // r_ext
@@ -439,7 +439,7 @@ void oscillator () {
     ss << "ring_oscillator";
     save_folder(ss.str());
 
-    double T = 100e-12;
+    double T = 180e-12;
 
     device_params n(ntfet);
     n.F[G] = .2;
