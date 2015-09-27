@@ -4,8 +4,8 @@
 #include <iomanip>
 #include <vector>
 #include <algorithm>
-#include "device.hpp"
-#include "charge_density.hpp"
+//#include "device.hpp"
+//#include "charge_density.hpp"
 
 
 class movie {
@@ -70,6 +70,9 @@ movie::movie(device & dev, const std::vector<std::pair<int, int> > &E_i, int ski
     gp2D << "unset colorbox\n";
     gp2D << "set terminal pngcairo size 800,600 font 'arial,16'\n";
     gp2D << "set palette defined(0 RWTH_Blau, 1 '#FFFFFFFF', 2 RWTH_Rot)\n";
+    gp2D << "set yrange [:.7]\n";
+    gp2D << "set style line 1 lc rgb RWTH_Schwarz\n";
+    gp2D << "set style line 2 lc rgb RWTH_Schwarz\n";
 
     // band offsets for band drawing
     band_offset.fill(0.5 * d.p.E_g);
@@ -218,8 +221,11 @@ void movie::frame2D() {
     ss << save_folder() << "/" << d.name << "/2D_movie/real" << std::setfill('0') << std::setw(4) << frames << ".png";
 
     gp2D << "set output \"" << ss.str() << "\"\n";
+    gp2D.reset();
     gp2D.set_background(d.p.x, E, arma::real(pix));
-    gp2D << "set cbrange [-.02:+.02]\n";
+    gp2D << "set cbrange [-.012:+.012]\n";
+    gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data - band_offset));
+    gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data + band_offset));
     gp2D.plot();
     gp2D.flush();
 }

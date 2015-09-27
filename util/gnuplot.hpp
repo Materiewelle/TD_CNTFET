@@ -174,7 +174,7 @@ void gnuplot::plot() {
 
 void gnuplot::reset() {
     data.clear();
-    plot_background = false;
+//    plot_background = false;
 }
 
 template<class ... T>
