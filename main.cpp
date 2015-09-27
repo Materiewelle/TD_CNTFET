@@ -123,10 +123,10 @@ using namespace std;
 void to_CSV(const string infile) {
     mat in;
     in.load(infile);
-//    mat out = trans(in);
-    mat out = in;
-//    mat out = in.col(in.n_cols - 1); // just I_d
-    out.save(infile + ".csv", arma::csv_ascii);
+    mat zwei = in.col(in.n_cols - 2);
+    zwei.save(infile + ".out.csv", arma::csv_ascii);
+    mat drei = in.col(in.n_cols - 1);
+    drei.save(infile + ".in.csv", arma::csv_ascii);
 }
 
 
