@@ -355,7 +355,7 @@ void gstep(double rise) {
 
     // get energy indices around fermi energy and init movie
     std::vector<std::pair<int, int>> E_ind = movie::around_Ef(d, -0.05);
-    movie argo(d, E_ind, 100); // not for actual movie, only for thesis
+    movie argo(d, E_ind, 1); // not for actual movie, only for thesis
 
     // perform time-evolution
     for (int i = 1; i < sig.N_t; ++i) {
