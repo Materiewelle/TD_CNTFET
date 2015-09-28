@@ -192,10 +192,10 @@ void movie::frame2D() {
 
     // loop over energy grid in left valence band
     for (ulint iE = 0; iE < d.psi[LV].E0.size(); ++iE) {
-        // get energy index in new grid
-        int ind = std::floor((d.psi[LV].E0[iE] + d.phi[d.m - 1].s() - d.phi[0].s() - E_min) / dE);
-        if (ind < 0 || ind >= nE) continue;
         for (int ix = 0; ix < d.p.N_x; ++ix) {
+            // get energy index in new grid
+            int ind = std::floor((d.psi[LV].E(ix, iE) - E_min) / dE);
+            if (ind < 0 || ind >= nE) continue;
              // sort wavefunction into correct bin
             cx_double orb1 = (*d.psi[LV].data)(2*ix, iE);
             cx_double orb2 = (*d.psi[LV].data)(2*ix+1, iE);
@@ -206,9 +206,9 @@ void movie::frame2D() {
     }
     // loop over energy grid in left conduction band
     for (ulint iE = 0; iE < d.psi[LC].E0.size(); ++iE) {
-        int ind = std::floor((d.psi[LC].E0[iE] + d.phi[d.m - 1].s() - d.phi[0].s() - E_min) / dE);
-        if (ind < 0 || ind >= nE) continue;
         for (int ix = 0; ix < d.p.N_x; ++ix) {
+            int ind = std::floor((d.psi[LC].E(ix, iE) - E_min) / dE);
+            if (ind < 0 || ind >= nE) continue;
             cx_double orb1 = (*d.psi[LC].data)(2*ix, iE);
             cx_double orb2 = (*d.psi[LC].data)(2*ix+1, iE);
             l_real(ind, ix) += real(orb1) * d.psi[LC].W(iE);
@@ -218,9 +218,9 @@ void movie::frame2D() {
     }
     // loop over energy grid in right valence band
     for (ulint iE = 0; iE < d.psi[RV].E0.size(); ++iE) {
-        int ind = std::floor((d.psi[RV].E0[iE] + d.phi[d.m - 1].d() - d.phi[0].d() - E_min) / dE);
-        if (ind < 0 || ind >= nE) continue;
         for (int ix = 0; ix < d.p.N_x; ++ix) {
+            int ind = std::floor((d.psi[RV].E(ix, iE) - E_min) / dE);
+            if (ind < 0 || ind >= nE) continue;
             cx_double orb1 = (*d.psi[RV].data)(2*ix, iE);
             cx_double orb2 = (*d.psi[RV].data)(2*ix+1, iE);
             both_real(ind, ix) -= sqrt(real(orb1)*real(orb1)) * d.psi[RV].W(iE) * d.psi[RV].F0[iE];
@@ -229,9 +229,9 @@ void movie::frame2D() {
     }
     // loop over energy grid in right conduction band
     for (ulint iE = 0; iE < d.psi[RC].E0.size(); ++iE) {
-        int ind = std::floor((d.psi[RC].E0[iE] + d.phi[d.m - 1].d() - d.phi[0].d() - E_min) / dE);
-        if (ind < 0 || ind >= nE) continue;
         for (int ix = 0; ix < d.p.N_x; ++ix) {
+            int ind = std::floor((d.psi[RC].E(ix, iE) - E_min) / dE);
+            if (ind < 0 || ind >= nE) continue;
             cx_double orb1 = (*d.psi[RC].data)(2*ix, iE);
             cx_double orb2 = (*d.psi[RC].data)(2*ix+1, iE);
             both_real(ind, ix) -= sqrt(real(orb1)*real(orb1)) * d.psi[RC].W(iE) * d.psi[RC].F0[iE];
