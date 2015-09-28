@@ -32,8 +32,8 @@ private:
     // 2D frame stuff
     arma::mat l_real;
     arma::mat both_real;
-    arma::mat density;
-    static constexpr int nE = 350;
+//    arma::mat density;
+    static constexpr int nE = 600;
     double E_min, E_max;
     double dE;
     arma::vec E;
@@ -57,7 +57,7 @@ movie::movie(device & dev, const std::vector<std::pair<int, int> > &E_i, int ski
     E = arma::linspace(E_min, E_max, nE);
     l_real = arma::mat(nE, d.p.N_x);
     both_real = arma::mat(nE, d.p.N_x);
-    density = arma::mat(nE, d.p.N_x);
+//    density = arma::mat(nE, d.p.N_x);
 
 
     // produce folder tree
@@ -84,7 +84,7 @@ movie::movie(device & dev, const std::vector<std::pair<int, int> > &E_i, int ski
     gp2D << "set ylabel \"E / eV\"\n";
     gp2D << "unset key\n";
     gp2D << "unset colorbox\n";
-    gp2D << "set terminal pngcairo size 600,450 font 'arial,16'\n";
+    gp2D << "set terminal pngcairo size 800,600 font 'arial,16'\n";
     gp2D << "set yrange [-1:.7]\n";
     gp2D << "set style line 1 lc rgb RWTH_Schwarz\n";
     gp2D << "set style line 2 lc rgb RWTH_Schwarz\n";
@@ -188,7 +188,7 @@ void movie::frame2D() {
 
     l_real.zeros();
     both_real.zeros();
-    density.zeros();
+//    density.zeros();
 
     // loop over energy grid in left valence band
     for (ulint iE = 0; iE < d.psi[LV].E0.size(); ++iE) {
@@ -198,10 +198,10 @@ void movie::frame2D() {
             if (ind < 0 || ind >= nE) continue;
              // sort wavefunction into correct bin
             cx_double orb1 = (*d.psi[LV].data)(2*ix, iE);
-            cx_double orb2 = (*d.psi[LV].data)(2*ix+1, iE);
+//            cx_double orb2 = (*d.psi[LV].data)(2*ix+1, iE);
             l_real(ind, ix) += real(orb1) * d.psi[LV].W(iE);
             both_real(ind, ix) += sqrt(real(orb1)*real(orb1)) * d.psi[LV].W(iE) * d.psi[LV].F0[iE];
-            density(ind, ix) += (abs(orb1)*abs(orb1) + abs(orb2)*abs(orb2)) * d.psi[LV].W(iE);
+//            density(ind, ix) += (abs(orb1)*abs(orb1) + abs(orb2)*abs(orb2)) * d.psi[LV].W(iE);
         }
     }
     // loop over energy grid in left conduction band
@@ -210,10 +210,10 @@ void movie::frame2D() {
             int ind = std::floor((d.psi[LC].E(ix, iE) - E_min) / dE);
             if (ind < 0 || ind >= nE) continue;
             cx_double orb1 = (*d.psi[LC].data)(2*ix, iE);
-            cx_double orb2 = (*d.psi[LC].data)(2*ix+1, iE);
+//            cx_double orb2 = (*d.psi[LC].data)(2*ix+1, iE);
             l_real(ind, ix) += real(orb1) * d.psi[LC].W(iE);
             both_real(ind, ix) += sqrt(real(orb1)*real(orb1)) * d.psi[LC].W(iE) * d.psi[LC].F0[iE];
-            density(ind, ix) += (abs(orb1)*abs(orb1) + abs(orb2)*abs(orb2)) * d.psi[LC].W(iE);
+//            density(ind, ix) += (abs(orb1)*abs(orb1) + abs(orb2)*abs(orb2)) * d.psi[LC].W(iE);
         }
     }
     // loop over energy grid in right valence band
@@ -222,9 +222,9 @@ void movie::frame2D() {
             int ind = std::floor((d.psi[RV].E(ix, iE) - E_min) / dE);
             if (ind < 0 || ind >= nE) continue;
             cx_double orb1 = (*d.psi[RV].data)(2*ix, iE);
-            cx_double orb2 = (*d.psi[RV].data)(2*ix+1, iE);
+//            cx_double orb2 = (*d.psi[RV].data)(2*ix+1, iE);
             both_real(ind, ix) -= sqrt(real(orb1)*real(orb1)) * d.psi[RV].W(iE) * d.psi[RV].F0[iE];
-            density(ind, ix) += (abs(orb1)*abs(orb1) + abs(orb2)*abs(orb2)) * d.psi[RV].W(iE);
+//            density(ind, ix) += (abs(orb1)*abs(orb1) + abs(orb2)*abs(orb2)) * d.psi[RV].W(iE);
         }
     }
     // loop over energy grid in right conduction band
@@ -233,9 +233,9 @@ void movie::frame2D() {
             int ind = std::floor((d.psi[RC].E(ix, iE) - E_min) / dE);
             if (ind < 0 || ind >= nE) continue;
             cx_double orb1 = (*d.psi[RC].data)(2*ix, iE);
-            cx_double orb2 = (*d.psi[RC].data)(2*ix+1, iE);
+//            cx_double orb2 = (*d.psi[RC].data)(2*ix+1, iE);
             both_real(ind, ix) -= sqrt(real(orb1)*real(orb1)) * d.psi[RC].W(iE) * d.psi[RC].F0[iE];
-            density(ind, ix) += (abs(orb1)*abs(orb1) + abs(orb2)*abs(orb2)) * d.psi[RC].W(iE);
+//            density(ind, ix) += (abs(orb1)*abs(orb1) + abs(orb2)*abs(orb2)) * d.psi[RC].W(iE);
         }
     }
 
@@ -243,18 +243,18 @@ void movie::frame2D() {
     gp2D << "set title 't = " << std::setprecision(3) << std::fixed << (d.m - 1) * c::dt * 1e12 << " ps'\n";
     std::stringstream ss;
 
-    gp2D << "set pal gray\n";
+//    gp2D << "set pal gray\n";
 
-    // density
-    gp2D.reset();
-    ss << save_folder() << "/" << d.name << "/2D_movie/dos/" << std::setfill('0') << std::setw(4) << frames << ".png";
-    gp2D << "set output \"" << ss.str() << "\"\n";
-    gp2D.set_background(d.p.x, E, log(density + 1e-6));
-    gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data - band_offset));
-    gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data + band_offset));
-    gp2D << "set cbrange [-6.5:-4]\n";
-    gp2D.plot();
-    gp2D.flush();
+//    // density
+//    gp2D.reset();
+//    ss << save_folder() << "/" << d.name << "/2D_movie/dos/" << std::setfill('0') << std::setw(4) << frames << ".png";
+//    gp2D << "set output \"" << ss.str() << "\"\n";
+//    gp2D.set_background(d.p.x, E, log(density + 1e-6));
+//    gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data - band_offset));
+//    gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data + band_offset));
+//    gp2D << "set cbrange [-6.5:-4]\n";
+//    gp2D.plot();
+//    gp2D.flush();
 
     gp2D << "set palette defined(0 RWTH_Blau, 1 '#FFFFFFFF', 2 RWTH_Rot)\n";
 

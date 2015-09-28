@@ -368,6 +368,37 @@ void gstep(double rise) {
     quasi_static(sig, d);
 }
 
+void gconst(double vg) {
+
+    signal<3> sig = linear_signal<3>(10e-12,  { 0, .3, vg }, { 0, .3, vg }); // complete signal
+
+//    sigplot(sig); return;
+
+    stringstream ss;
+    ss << "gconst/vg=" << vg;
+    save_folder(ss.str());
+
+    device d("ntfet", ntfet, sig.V[0]);
+    d.p.F[G] = .2; //match
+    d.p.update("matched");
+    d.steady_state();
+    d.init_time_evolution(sig.N_t);
+
+    // get energy indices around fermi energy and init movie
+    std::vector<std::pair<int, int>> E_ind = movie::around_Ef(d, -0.05);
+    movie argo(d, E_ind, 1); // not for actual movie, only for thesis
+
+    // perform time-evolution
+    for (int i = 1; i < sig.N_t; ++i) {
+        d.contacts[G]->V = sig.V[i][G];
+        d.time_step();
+    }
+    d.save();
+
+    std::cout << "\nGetting quasi-static current curve...\n";
+    quasi_static(sig, d);
+}
+
 inline void gsquare(double f) {
     double rise = 100e-15;
     double fall = rise;
@@ -546,6 +577,9 @@ int main(int argc, char ** argv) {
     } else if (stype == "gstep" && argc == 4) {
         // vs for parallelization
         gstep(stod(argv[3]));
+    } else if (stype == "gconst" && argc == 4) {
+        // vs for parallelization
+        gconst(stod(argv[3]));
     } else if (stype == "gsquare" && argc == 4) {
         // square wave of certain frequency on gate
         gsquare(stod(argv[3]));
