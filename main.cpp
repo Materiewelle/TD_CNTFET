@@ -370,7 +370,7 @@ void gstep(double rise) {
 
 void gconst(double vg) {
 
-    signal<3> sig = linear_signal<3>(10e-12,  { 0, .3, vg }, { 0, .3, vg }); // complete signal
+    signal<3> sig = linear_signal<3>(5e-12,  { 0, .3, vg }, { 0, .3, vg }); // complete signal
 
 //    sigplot(sig); return;
 
