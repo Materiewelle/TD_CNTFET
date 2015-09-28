@@ -332,8 +332,9 @@ void ntd_inverter(int part) {
 }
 
 void gstep(double rise) {
-    double beg = 10e-12;
-    double cool = 10e-12;
+    double beg = .02e-12;
+    double cool = .04e-12;
+    rise = .02e-12;
 
     signal<3> pre   = linear_signal<3>(beg,  { 0, .3, 0. }, { 0, .3, 0. }); // before
     signal<3> slope = linear_signal<3>(rise,  { 0, .3, 0. }, { 0, .3, .2 }); // while
@@ -355,7 +356,7 @@ void gstep(double rise) {
 
     // get energy indices around fermi energy and init movie
     std::vector<std::pair<int, int>> E_ind = movie::around_Ef(d, -0.05);
-    movie argo(d, E_ind, 1); // not for actual movie, only for thesis
+    movie (d, E_ind, 2); // not for actual movie, only for thesis
 
     // perform time-evolution
     for (int i = 1; i < sig.N_t; ++i) {
@@ -370,7 +371,7 @@ void gstep(double rise) {
 
 void gconst(double vg) {
 
-    signal<3> sig = linear_signal<3>(5e-12,  { 0, .3, vg }, { 0, .3, vg }); // complete signal
+    signal<3> sig = linear_signal<3>(.08e-12,  { 0, .3, vg }, { 0, .3, vg }); // complete signal
 
 //    sigplot(sig); return;
 
@@ -386,7 +387,7 @@ void gconst(double vg) {
 
     // get energy indices around fermi energy and init movie
     std::vector<std::pair<int, int>> E_ind = movie::around_Ef(d, -0.05);
-    movie argo(d, E_ind, 1); // not for actual movie, only for thesis
+    movie argo(d, E_ind, 2); // not for actual movie, only for thesis
 
     // perform time-evolution
     for (int i = 1; i < sig.N_t; ++i) {
@@ -450,7 +451,7 @@ void gsine(double f) { // compile with smaller dt!!!
 
     // get energy indices around fermi energy and init movie
     std::vector<std::pair<int, int>> E_ind = movie::around_Ef(d, -0.05);
-    movie argo(d, E_ind, 1);
+    movie argo(d, E_ind, 2);
 
     // time-evolution
     for (int i = 1; i < sig.N_t; ++i) {
