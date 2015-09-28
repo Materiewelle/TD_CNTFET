@@ -27,9 +27,16 @@ private:
     gnuplot gp, gp2D;
     arma::vec band_offset;
 
-    int frame_skip = 2;
+    int frame_skip = 1;
 
-    arma::cx_mat pix;
+    // 2D frame stuff
+    arma::mat l_real;
+    arma::mat both_real;
+    arma::mat density;
+    static constexpr int nE = 350;
+    double E_min, E_max;
+    double dE;
+    arma::vec E;
 
     inline void frame();
     inline void frame2D();
@@ -43,7 +50,14 @@ private:
 movie::movie(device & dev, const std::vector<std::pair<int, int> > &E_i, int skip)
     : frames(0), d(dev), E_ind(E_i), band_offset(d.p.N_x), frame_skip(skip) {
 
-    pix = arma::zeros<arma::cx_mat>(charge_density::initial_waypoints, d.p.N_x);
+    // get energy range
+    E_min = -1;//charge_density::E_min + std::min(d.phi[0].s(), d.phi[0].d());
+    E_max = +1;//charge_density::E_max + std::max(d.phi[0].s(), d.phi[0].d());
+    dE = (E_max - E_min) / nE;
+    E = arma::linspace(E_min, E_max, nE);
+    l_real = arma::mat(nE, d.p.N_x);
+    both_real = arma::mat(nE, d.p.N_x);
+    density = arma::mat(nE, d.p.N_x);
 
 
     // produce folder tree
@@ -51,11 +65,13 @@ movie::movie(device & dev, const std::vector<std::pair<int, int> > &E_i, int ski
         int lattice = E_ind[i].first;
         double E = d.psi[lattice].E0(E_ind[i].second);
         system("mkdir -p " + output_folder(lattice, E));
-        system("mkdir -p " + save_folder() + "/" + d.name + "/2D_movie");
+        system("mkdir -p " + save_folder() + "/" + d.name + "/2D_movie/dos");
+        system("mkdir -p " + save_folder() + "/" + d.name + "/2D_movie/left");
+        system("mkdir -p " + save_folder() + "/" + d.name + "/2D_movie/current");
     }
 
     // gnuplot setup
-    gp << "set terminal pngcairo size 800,600 font 'arial,16'\n";
+    gp << "set terminal pngcairo size 1024,768 font 'arial,16'\n";
     gp << "set style line 66 lc rgb RWTH_Schwarz_50 lt 1 lw 2\n";
     gp << "set border 3 ls 66\n";
     gp << "set tics nomirror\n";
@@ -68,9 +84,8 @@ movie::movie(device & dev, const std::vector<std::pair<int, int> > &E_i, int ski
     gp2D << "set ylabel \"E / eV\"\n";
     gp2D << "unset key\n";
     gp2D << "unset colorbox\n";
-    gp2D << "set terminal pngcairo size 800,600 font 'arial,16'\n";
-    gp2D << "set palette defined(0 RWTH_Blau, 1 '#FFFFFFFF', 2 RWTH_Rot)\n";
-    gp2D << "set yrange [:.7]\n";
+    gp2D << "set terminal pngcairo size 600,450 font 'arial,16'\n";
+    gp2D << "set yrange [-1:.7]\n";
     gp2D << "set style line 1 lc rgb RWTH_Schwarz\n";
     gp2D << "set style line 2 lc rgb RWTH_Schwarz\n";
 
@@ -168,66 +183,105 @@ void movie::frame() {
 }
 
 void movie::frame2D() {
-    // shows dos comming from source contact
-    // WARNING: Assumes that V_s does not change
     using namespace arma;
+//    gp2D << "set colorbox\n";
 
-    // get energy range
-    int nE = charge_density::initial_waypoints;
-    double E_min = charge_density::E_min + d.phi[0].s();
-    double E_max = charge_density::E_max + d.phi[0].s();
-    double dE = (E_max - E_min) / nE;
-    vec E = linspace(E_min, E_max, nE);
-
-    pix.zeros();
+    l_real.zeros();
+    both_real.zeros();
+    density.zeros();
 
     // loop over energy grid in left valence band
     for (ulint iE = 0; iE < d.psi[LV].E0.size(); ++iE) {
         // get energy index in new grid
-        int ind = std::floor((d.psi[LV].E0[iE] - E_min) / dE);
+        int ind = std::floor((d.psi[LV].E0[iE] + d.phi[d.m - 1].s() - d.phi[0].s() - E_min) / dE);
+        if (ind < 0 || ind >= nE) continue;
         for (int ix = 0; ix < d.p.N_x; ++ix) {
              // sort wavefunction into correct bin
-            pix(ind, ix) += (d.psi[LV].data1(2*ix, iE) + d.psi[LV].data1(2*ix+1, iE)) * d.psi[LV].W(iE);
+            cx_double orb1 = (*d.psi[LV].data)(2*ix, iE);
+            cx_double orb2 = (*d.psi[LV].data)(2*ix+1, iE);
+            l_real(ind, ix) += real(orb1) * d.psi[LV].W(iE);
+            both_real(ind, ix) += sqrt(real(orb1)*real(orb1)) * d.psi[LV].W(iE) * d.psi[LV].F0[iE];
+            density(ind, ix) += (abs(orb1)*abs(orb1) + abs(orb2)*abs(orb2)) * d.psi[LV].W(iE);
         }
     }
     // loop over energy grid in left conduction band
     for (ulint iE = 0; iE < d.psi[LC].E0.size(); ++iE) {
-        int ind = std::floor((d.psi[LC].E0[iE] - E_min) / dE);
+        int ind = std::floor((d.psi[LC].E0[iE] + d.phi[d.m - 1].s() - d.phi[0].s() - E_min) / dE);
+        if (ind < 0 || ind >= nE) continue;
         for (int ix = 0; ix < d.p.N_x; ++ix) {
-            pix(ind, ix) += (d.psi[LC].data1(2*ix, iE) + d.psi[LC].data1(2*ix+1, iE)) * d.psi[LC].W(iE);// * d.psi[LC].F0(iE);
+            cx_double orb1 = (*d.psi[LC].data)(2*ix, iE);
+            cx_double orb2 = (*d.psi[LC].data)(2*ix+1, iE);
+            l_real(ind, ix) += real(orb1) * d.psi[LC].W(iE);
+            both_real(ind, ix) += sqrt(real(orb1)*real(orb1)) * d.psi[LC].W(iE) * d.psi[LC].F0[iE];
+            density(ind, ix) += (abs(orb1)*abs(orb1) + abs(orb2)*abs(orb2)) * d.psi[LC].W(iE);
+        }
+    }
+    // loop over energy grid in right valence band
+    for (ulint iE = 0; iE < d.psi[RV].E0.size(); ++iE) {
+        int ind = std::floor((d.psi[RV].E0[iE] + d.phi[d.m - 1].d() - d.phi[0].d() - E_min) / dE);
+        if (ind < 0 || ind >= nE) continue;
+        for (int ix = 0; ix < d.p.N_x; ++ix) {
+            cx_double orb1 = (*d.psi[RV].data)(2*ix, iE);
+            cx_double orb2 = (*d.psi[RV].data)(2*ix+1, iE);
+            both_real(ind, ix) -= sqrt(real(orb1)*real(orb1)) * d.psi[RV].W(iE) * d.psi[RV].F0[iE];
+            density(ind, ix) += (abs(orb1)*abs(orb1) + abs(orb2)*abs(orb2)) * d.psi[RV].W(iE);
+        }
+    }
+    // loop over energy grid in right conduction band
+    for (ulint iE = 0; iE < d.psi[RC].E0.size(); ++iE) {
+        int ind = std::floor((d.psi[RC].E0[iE] + d.phi[d.m - 1].d() - d.phi[0].d() - E_min) / dE);
+        if (ind < 0 || ind >= nE) continue;
+        for (int ix = 0; ix < d.p.N_x; ++ix) {
+            cx_double orb1 = (*d.psi[RC].data)(2*ix, iE);
+            cx_double orb2 = (*d.psi[RC].data)(2*ix+1, iE);
+            both_real(ind, ix) -= sqrt(real(orb1)*real(orb1)) * d.psi[RC].W(iE) * d.psi[RC].F0[iE];
+            density(ind, ix) += (abs(orb1)*abs(orb1) + abs(orb2)*abs(orb2)) * d.psi[RC].W(iE);
         }
     }
 
-//    // loop over energy grid in left valence band
-//    for (ulint iE = 0; iE < d.psi[RV].E0.size(); ++iE) {
-//        int ind = std::floor((d.psi[RV].E0[iE] - E_min) / dE);
-//        for (int ix = 0; ix < d.p.N_x; ++ix) {
-//            pix(ind, ix) += (d.psi[RV].data1(2*ix, iE) + d.psi[RV].data1(2*ix+1, iE)) * d.psi[RV].W(iE) * d.psi[RV].F0(iE);
-//        }
-//    }
-//    // loop over energy grid in left conduction band
-//    for (ulint iE = 0; iE < d.psi[RC].E0.size(); ++iE) {
-//        int ind = std::floor((d.psi[RC].E0[iE] - E_min) / dE);
-//        for (int ix = 0; ix < d.p.N_x; ++ix) {
-//            pix(ind, ix) += (d.psi[RC].data1(2*ix, iE) + d.psi[RC].data1(2*ix+1, iE)) * d.psi[RC].W(iE) * d.psi[RC].F0(iE);
-//        }
-//    }
-
-
-
-    // plot
+    // --------------- plot -----------------
     gp2D << "set title 't = " << std::setprecision(3) << std::fixed << (d.m - 1) * c::dt * 1e12 << " ps'\n";
     std::stringstream ss;
-    ss << save_folder() << "/" << d.name << "/2D_movie/real" << std::setfill('0') << std::setw(4) << frames << ".png";
 
-    gp2D << "set output \"" << ss.str() << "\"\n";
+    gp2D << "set pal gray\n";
+
+    // density
     gp2D.reset();
-    gp2D.set_background(d.p.x, E, arma::real(pix));
-    gp2D << "set cbrange [-.012:+.012]\n";
+    ss << save_folder() << "/" << d.name << "/2D_movie/dos/" << std::setfill('0') << std::setw(4) << frames << ".png";
+    gp2D << "set output \"" << ss.str() << "\"\n";
+    gp2D.set_background(d.p.x, E, log(density + 1e-6));
+    gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data - band_offset));
+    gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data + band_offset));
+    gp2D << "set cbrange [-6.5:-4]\n";
+    gp2D.plot();
+    gp2D.flush();
+
+    gp2D << "set palette defined(0 RWTH_Blau, 1 '#FFFFFFFF', 2 RWTH_Rot)\n";
+
+    // left
+    gp2D.reset();
+    ss.str("");
+    ss << save_folder() << "/" << d.name << "/2D_movie/left/" << std::setfill('0') << std::setw(4) << frames << ".png";
+    gp2D << "set output \"" << ss.str() << "\"\n";
+    gp2D << "set cbrange [-.01:+.01]\n";
+    gp2D.set_background(d.p.x, E, l_real);
     gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data - band_offset));
     gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data + band_offset));
     gp2D.plot();
     gp2D.flush();
+
+    // both
+    gp2D.reset();
+    ss.str("");
+    ss << save_folder() << "/" << d.name << "/2D_movie/current/" << std::setfill('0') << std::setw(4) << frames << ".png";
+    gp2D << "set output \"" << ss.str() << "\"\n";
+    gp2D << "set cbrange [-.01:+.01]\n";
+    gp2D.set_background(d.p.x, E, both_real);
+    gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data - band_offset));
+    gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data + band_offset));
+    gp2D.plot();
+    gp2D.flush();
+
 }
 
 std::string movie::output_file(int lattice, double E0, int frame_number) {

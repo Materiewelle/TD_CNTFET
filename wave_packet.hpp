@@ -11,7 +11,6 @@ public:
     arma::vec E0;
     arma::vec F0;
     arma::vec W;
-    arma::cx_mat data1;
     arma::cx_mat * data;
     arma::mat E;
 
@@ -53,6 +52,7 @@ private:
     arma::cx_mat old_source;
     arma::cx_mat * old_data;
 
+    arma::cx_mat data1;
     arma::cx_mat data2;
 };
 

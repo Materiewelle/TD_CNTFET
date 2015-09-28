@@ -332,12 +332,12 @@ void ntd_inverter(int part) {
 }
 
 void gstep(double rise) {
-    double beg = 1e-12;
-    double cool = 3e-12;
+    double beg = 10e-12;
+    double cool = 10e-12;
 
-    signal<3> pre   = linear_signal<3>(beg,  { 0, .2, 0. }, { 0, .2, 0. }); // before
-    signal<3> slope = linear_signal<3>(rise,  { 0, .2, 0. }, { 0, .2, .2 }); // while
-    signal<3> after = linear_signal<3>(cool, { 0, .2, .2 }, { 0, .2, .2 }); // after
+    signal<3> pre   = linear_signal<3>(beg,  { 0, .3, 0. }, { 0, .3, 0. }); // before
+    signal<3> slope = linear_signal<3>(rise,  { 0, .3, 0. }, { 0, .3, .2 }); // while
+    signal<3> after = linear_signal<3>(cool, { 0, .3, .2 }, { 0, .3, .2 }); // after
 
     signal<3> sig = pre + slope + after; // complete signal
 
@@ -403,7 +403,7 @@ void gsine(double f) { // compile with smaller dt!!!
 
     // swing around 0.1V with amplitude 0.1V -> vg between 0 and 0.2
     double phase = 1.5 * M_PI; // start from minimum
-    signal<3> sig = sine_signal<3>(len,  { 0, .2, .1 }, { 0,  0, .1 }, f, phase);
+    signal<3> sig = sine_signal<3>(len,  { 0, .3, .1 }, { 0,  0, .1 }, f, phase);
 
 //    sigplot(sig); return;
 
