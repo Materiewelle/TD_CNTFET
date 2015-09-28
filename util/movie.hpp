@@ -263,7 +263,7 @@ void movie::frame2D() {
     ss.str("");
     ss << save_folder() << "/" << d.name << "/2D_movie/left/" << std::setfill('0') << std::setw(4) << frames << ".png";
     gp2D << "set output \"" << ss.str() << "\"\n";
-    gp2D << "set cbrange [-.015:+.015]\n";
+    gp2D << "set cbrange [-.004:+.004]\n";
     gp2D.set_background(d.p.x, E, l_real);
     gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data - band_offset));
     gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data + band_offset));
@@ -275,7 +275,7 @@ void movie::frame2D() {
     ss.str("");
     ss << save_folder() << "/" << d.name << "/2D_movie/current/" << std::setfill('0') << std::setw(4) << frames << ".png";
     gp2D << "set output \"" << ss.str() << "\"\n";
-    gp2D << "set cbrange [-.015:+.015]\n";
+    gp2D << "set cbrange [-.004:+.004]\n";
     gp2D.set_background(d.p.x, E, both_real);
     gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data - band_offset));
     gp2D.add(std::make_pair(d.p.x, d.phi[d.m - 1].data + band_offset));
