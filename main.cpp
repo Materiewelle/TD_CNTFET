@@ -263,7 +263,7 @@ void final_transfer(double vd) {
     stringstream ss;
     ss << "final/trans_vs=" << vd;
     save_folder(ss.str());
-    device d("ntfet", ntfet);
+    device d("nfet", ntfet);
     transfer<true>(d.p, { { 0, vd, gvg0 } }, gvg1, gN);
 }
 
@@ -334,7 +334,6 @@ void ntd_inverter(int part) {
 void gstep(double rise) {
     double beg = .02e-12;
     double cool = .04e-12;
-    rise = .02e-12;
 
     signal<3> pre   = linear_signal<3>(beg,  { 0, .3, 0. }, { 0, .3, 0. }); // before
     signal<3> slope = linear_signal<3>(rise,  { 0, .3, 0. }, { 0, .3, .2 }); // while
