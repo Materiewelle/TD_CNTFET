@@ -33,13 +33,13 @@
 static const geometry tfet_geometry {
     10.0, // eps_cnt
     25.0, // eps_ox
-     5.0, // l_sc
+    10.0, // l_sc
     20.0, // l_sox
      5.0, // l_sg
     30.0, // l_g
     30.0, // l_dg
      2.0, // l_dox
-     5.0, // l_dc
+    10.0, // l_dc
      1.0, // r_cnt
      3.0, // d_ox
      2.0, // r_ext
@@ -138,11 +138,11 @@ static const double gvg1 = .5;
 static const double gvgop = .4;
 static const double gvd0 = 0.;
 static const double gvd1 = .5;
-static const double gvdop = .2;
-static const int gN = 400;
+static const double gvdop = .4;
+static const int gN = 200;
 
 void voltage_point(double vs, double vd, double vg) {
-    device d("ntfet", ntfet, {vs, vd, vg});
+    device d("ntfet", ntfetc, {vs, vd, vg});
     d.p.dx = .2; // for nicer figures
     d.p.update("small_dx");
     d.steady_state();
